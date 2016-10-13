@@ -1,6 +1,6 @@
 var waypointFactory = function(x, y, type, areaHov) {
 	// create a waypoint and give it a location,type, and area association
-	return {x: x, y: y, type: type, area: areaHov}
+	return {x: x, y: y, type: type, area: areaHov[areaHov.length-1]}
 }
 
 var cursorPoint = function (evt, pointel, svgel, svgstateel) {
@@ -63,25 +63,54 @@ var parsePath = function(element) {
 }
 
 
-var voronoiHelper = function(waypoints) {
+var delaunayHelper = function(waypoints, areaHov) {
 	// draws delaunay Triangles 
+
 	function redrawTriangle(triangle) {
   		triangle.classed("primary", function(d) { 
-  			return d[0] === sites[0] || d[1] === sites[0] || d[2] === sites[0]; 
+  			return d[0] === s2[0] || d[1] === s2[0] || d[2] === s2[0]; 
   		})
       .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
 	}
+
+	function redraw() {
+  		var diagram = voronoi(s2);
+  		triangle = triangle.data(diagram.triangles()), triangle.exit().remove();
+  		triangle = triangle.enter().append("path").merge(triangle).call(redrawTriangle);
+  		link = link.data(diagram.links()), link.exit().remove();
+  		link = link.enter().append("line").merge(link).call(redrawLink);
+  		site = site.data(s2).call(redrawSite);
+	}
+
+	function redrawLink(link) {
+  		link.classed("primary", function(d) { return d.source === s2[0] || d.target === s2[0]; })
+      .attr("x1", function(d) { return d.source[0]; })
+      .attr("y1", function(d) { return d.source[1]; })
+      .attr("x2", function(d) { return d.target[0]; })
+      .attr("y2", function(d) { return d.target[1]; });
+	}
 	
+	function redrawSite(site) {
+  	site
+      .attr("cx", function(d) { return d[0]; })
+      .attr("cy", function(d) { return d[1]; });
+	}
+
 	//testdata
-	var sites = [[123,3423],[3423,3321],[345,1234],[3456,3221],[890,1234],[560,1700]];
 	var voronoi = d3.voronoi();
 
-	console.log(voronoi.triangles(sites))
+	console.log(areaHov)
+	console.log(waypoints)
+	var s = waypoints.filter(function(x){if (x.area === areaHov){ return x}})
+	console.log(s)
+	var s2 = s.map(function(d) {return [d.x, d.y]})
+	console.log(s2)
+	console.log(voronoi.triangles(s2))
 
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
 		.selectAll("path")
-		.data(voronoi.triangles(sites))
+		.data(voronoi.triangles(s2))
 		.enter()
 		.append("path")
 		.call(redrawTriangle)
@@ -89,9 +118,9 @@ var voronoiHelper = function(waypoints) {
 	var link = d3.select("#voronoi")
 		.attr("class", "links")
 		.selectAll("line")
-		.data(voronoi.links([sites]))
+		.data(voronoi.links(s2))
 		.enter().append("line")
-		///.call(redrawLink);
+		.call(redrawLink);
 	//var corners = results.map(function(x){return x[0]})
 	//var triangles = voronoi.triangles(corners);
 	//document.getElementById("corners");
@@ -129,7 +158,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
-			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", areaHov)
+			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", "open")
 			waypoints.push(waypoint)
 		}
 
@@ -164,6 +193,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 
 	// get existing areas and add to polys list
 	var areas = document.getElementById("areas");
+	
 	for (var i = 0; i < areas.children.length; ++i) {
 		
 		// create text to append
@@ -184,6 +214,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
 			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", id)
+			console.log(id)
 			waypoints.push(waypoint)
 		}
 		
@@ -219,24 +250,28 @@ var areaHelper = function(polys, waypoints, areaHov) {
         	// show details on mouseover; set the hovered area to that area's name
 			areas.children[i].addEventListener("mouseover", function(evt) {
 				evt.target.parentNode.children[1].setAttributeNS(null, "class", "details");
-				areaHov = evt.target.getAttributeNS(null,"id");
+				
+				areaHov.push(evt.target.parentNode.children[0].getAttributeNS(null, "id"));
+				console.log(areaHov)
 			});
 
 			// hide them on mouse out, set the hovered area to "open". if you go right into another area, it will get set to that name, otherwise, it will be open
 			areas.children[i].addEventListener("mouseout", function(evt) {
 				evt.target.parentNode.children[1].setAttributeNS(null, "class", "hidden-details");
-				areaHov = "open";
+				areaHov.push("open");
 			});
 		}
 	}
 	mainOutlineHelper(null, polys)
 }
 
-var simplePolygonHelper = function(path, counter, polys) {
+var simplePolygonHelper = function(path, polys) {
 	// computes the area and makes display settings of a newly drawn polygon
 	var conversionFactor = 0.0004;
 	var polygonIn = polygonSampledFromPath(path, 1000);
 	var thisArea = polyArea(polygonIn);
+
+	var counter = document.getElementById("areas").children.length
 	var id = "areas-" + counter;
 	path.setAttributeNS(null, "id", id);
 	polys.push({'polygon': polygonIn, 'area': thisArea*conversionFactor, 'units': 'feet', 'id': id, 'walkable': 0});
@@ -269,17 +304,16 @@ var simplePolygonHelper = function(path, counter, polys) {
 	t.appendChild(ts2);
 	t.appendChild(ts3);
 	
-	console.log(path.parentNode)
 	path.parentNode.appendChild(t);
 
 	path.parentNode.addEventListener("mouseover", function(evt) {
 		evt.target.parentNode.children[1].setAttributeNS(null, "class", "details");
-		areaHov = evt.target.getAttributeNS(null,"id");
+		areaHov.push(path.getAttributeNS(null, "id"));
+		console.log(areaHovareaHov[areaHov.length-1]);
 	});
 
 	path.parentNode.addEventListener("mouseout", function(evt) {
 		evt.target.parentNode.children[1].setAttributeNS(null, "class", "hidden-details");
-		areaHov = "open";
 	});
 }
 

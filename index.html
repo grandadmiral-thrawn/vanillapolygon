@@ -1,5 +1,5 @@
 <html>
-<title> Hybrid waypoints/delauney pathfinding, pure SVG magicks </title>
+<title> Hybrid waypoints/delaunay pathfinding, pure SVG magicks </title>
 <head>
 <link rel="stylesheet" href="styles.css" type="text/css" >
 <link rel="stylesheet" href="font-awesome.min.css" type="text/css" >
@@ -15,7 +15,7 @@
     <div class="passive" id="areas-button"> AREAS </div>
     <div class="passive" id="close-button"> CLOSE </div>
     <div class="passive" id="waypoints-button"> POI </div>
-    <div class="passive" id="delauney-button"> DELAUNEY </div>
+    <div class="passive" id="delaunay-button"> delaunay </div>
     <div class="passive" id="voronoi-button"> VORONOI </div>
     <div class="passive" id="obstacle-button"> OBSTACLE </div>
     <div class="passive" id="demo-button"> DEMO </div>
@@ -57,7 +57,7 @@
 		<g id="doors"></g>
 		<g id="corners"></g>
 		<g id="waypoints"></g>
-		<g id="delauney"></g>
+		<g id="delaunay"></g>
 		<g id="voronoi"></g>
 		<g id="obstacles">
 			<path id="obstacle-1" class="obstacle" d="M 860 3004 L 1060 3004 L 1060 3180 L 860 3180 Z" fill="#e42217" stroke="#e42217" fill-opacity="0.1" stroke-opacity="0.7" stroke-width="15"/>
@@ -68,18 +68,18 @@
 <script>
 	window.onload = function() {
 
-	// the current state and state history (where is cursor and where was it). Updates with click events etc.
+	// current and prior cursor locations
 	var state = [];
-	// the current place you are looking at in terms of area
-	var areaHov  = "open";
-	// "waypoints" -- pretty much all circles and their locations
+	// what area the mouse is currently hovering over
+	var areaHov = [];
+	// all nodes, their locations, the area associated with, and the type
 	var waypoints = [];
-	// "polys" -- an array of all the identified areas. Areas already in the SVG are automatically included. New areas are put on the end
+	// "polys" -- an array of all the identified areas. Areas already in the SVG are automatically included. Would be useful on the backend but maybe useless here.
 	var polys = [];
-	// coordinates of the area being drawn
+	// coordinates of the area being drawn. Upon "close", this empties
 	var coords = [];
 
-	// what are we currently "doing" --- reduxed yo.
+	// what function are we currently "doing" --- reduxed yo.
 	var currentEventListener = [];
 	// turns on the adding points to waypoints as doors
 	var doorsButton = document.getElementById("doors-button");
@@ -89,8 +89,10 @@
 	var waypointsButton = document.getElementById("waypoints-button");
 	// closes polygons
 	var closeButton = document.getElementById("close-button");
-	// closes polygons
+	// closes generates voronoi triangles and infill waypoints
 	var voronoiButton = document.getElementById("voronoi-button");
+	// generates triangulation per area
+	var delaunayButton = document.getElementById("delaunay-button");
 	// clears stuff for a demo
 	var demoButton = document.getElementById("demo-button");
 	
@@ -100,7 +102,7 @@
 	var mo = document.getElementById("main-outline");
 	// grouping element containing doors
 	var doors = document.getElementById("doors");
-	// grouping element containing doors
+	// grouping element for all waypoints
 	var way = document.getElementById("waypoints");
 	// grouping element containing doors
 	var corn = document.getElementById("corners");
@@ -113,25 +115,27 @@
 		// doors are added as salmon nodes
 		if (state.length >= 1){
 			circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon")
-	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov});
+	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov[areaHov.length-1]});
 		}
 	}
 
 	var listenWaypoints = function(evt) {
-	if (state.length >= 1){
+		if (state.length >= 1){
 			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
-	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov});
+	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
 		}
+	
 	}
 
 	var listenVoronoi = function(evt){
-		if (waypoints.length >= 1){
-			voronoiHelper(waypoints);
-		}
+		console.log("no")
 	}
 
-	var listenDelauney = function(evt){
-		console.log("no delauney created yet")
+	var listenDelaunay = function(evt){
+		if (waypoints.length >= 1){
+			
+			delaunayHelper(waypoints, areaHov[areaHov.length-1]);
+		}
 	}
 
 	var listenAreas = function(evt) {
@@ -146,7 +150,7 @@
 					p0[i].setAttributeNS(null, "class", "areas");
 				}
 			}
-			// create a wrapper group and a blank path to continue drawing
+			// create a wrapper group and a blank path to continue drawing. 
 			var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 			g.setAttributeNS(null, "class", "wrapper");
 			var p = document.createElementNS("http://www.w3.org/2000/svg", "path")
@@ -166,7 +170,7 @@
 			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
 			var w = document.getElementById("waypoints").lastElementChild;
 			w.setAttributeNS(null, "class", "removable");
-			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov})
+			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov[areaHov.length-1]})
 		}
 	}
 
@@ -204,7 +208,6 @@
 		}
 		// we assign the appropriate one, listenAreas
 		svg.addEventListener('click', listenAreas, function(coords){
-			coords.push("hi");
 			console.log(coords)
 		});
 		currentEventListener.push(listenAreas);
@@ -215,7 +218,6 @@
 
 	// click unique waypoints or POI and add them to the waypoints
 	waypointsButton.addEventListener('click', function(evt) {
-		console.log(currentEventListener)
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
@@ -223,12 +225,10 @@
 		currentEventListener.push(listenWaypoints);
 		d3.selectAll(".active").attr("class", "passive");
 		waypointsButton.setAttribute('class', 'active');
-		console.log(currentEventListener)
 	})
 
 	// click demo to generate a bunch of waypoints and clear the things
 	demoButton.addEventListener('click', function(evt) {
-		console.log(currentEventListener)
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
@@ -241,7 +241,6 @@
 
 	// generate voronoi waypoints for the main outline or a selected area
 	voronoiButton.addEventListener('click', function(evt) {
-		console.log(currentEventListener)
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
@@ -249,7 +248,18 @@
 		currentEventListener.push(listenVoronoi);
 		d3.selectAll(".active").attr("class", "passive");
 		voronoiButton.setAttribute('class', 'active');
-		console.log(currentEventListener)
+	})
+
+	// generate voronoi waypoints for the main outline or a selected area
+	delaunayButton.addEventListener('click', function(evt) {
+		
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		svg.addEventListener('click', listenDelaunay);
+		currentEventListener.push(listenDelaunay);
+		d3.selectAll(".active").attr("class", "passive");
+		delaunayButton.setAttribute('class', 'active');
 	})
 
 	// close event listener doesn't matter the same way. It needs to be active whenever the areas event listener is active, but if its active at some other time, it's not going to hurt you.
@@ -266,7 +276,7 @@
 		p.setAttributeNS(null, "d", d3path);
 		p.setAttributeNS(null, "class", "areas");
 		var counter= document.getElementById("areas").length;
-		simplePolygonHelper(p, counter, polys)
+		simplePolygonHelper(p, polys)
 		coords = [];
 	})
 

@@ -65,20 +65,25 @@ body {
 }
 
 .links {
-  stroke: #000;
+  stroke: #fff;
+  stroke-width: 10;
 }
 
 .sites {
-  fill: #000;
+  fill: #fff;
   stroke: #fff;
 }
 
 .triangles .primary {
   fill: #f00;
+  fill-opacity: 0.3;
 }
 
 .links .primary {
   stroke: #fff;
+  stroke-width: 20;
+  fill: #fff;
+  fill-opacity: 1.0;
 }
 
 .sites :first-child {
