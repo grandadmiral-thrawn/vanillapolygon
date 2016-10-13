@@ -1,0 +1,145 @@
+body {
+  background: #030303;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* styles for display on the top to show what 'mode' is active*/
+.active {
+	background-color: salmon;
+	width: 170px;
+  	height: 1em;
+  	text-align: center;
+  	align-items: center;
+  	color: white;
+  	padding-top: 0.5em;
+  	padding-bottom: 0.5em;
+  	border-radius: 10px;
+  	margin-left: 10px;
+}
+
+.passive {
+	background-color: cornflowerblue;
+	width: 170px;
+  	height: 1em;
+  	text-align: center;
+  	align-items: center;
+  	color: white;
+  	padding-top: 0.5em;
+  	padding-bottom: 0.5em;
+  	border-radius: 10px;
+  	margin-left: 10px;
+}
+
+#sideways-flex {
+  padding: 20px;
+  width: 1000px;
+  height: 1em;
+  display: flex;
+  flex-flow: row wrap
+  justify-content: space-around;
+  align-items: center;
+}
+
+#output-button {
+  height: 1em;
+  width: 200px;
+  background-color: #f0e150;
+}
+
+#close-button {
+  height: 1em;
+  background-color: #f0e150;
+}
+
+/* hiding and showing text elements within group elements of SVG */
+.details > tspan {
+	visibility: visible;
+}
+
+.hidden-details > tspan {
+	visibility: hidden;
+}
+
+.triangles {
+  fill: none;
+}
+
+.links {
+  stroke: #000;
+}
+
+.sites {
+  fill: #000;
+  stroke: #fff;
+}
+
+.triangles .primary {
+  fill: #f00;
+}
+
+.links .primary {
+  stroke: #fff;
+}
+
+.sites :first-child {
+  fill: #fff;
+}
+
+
+#routeContainer {
+	text-align: center;
+}
+
+#mapContainer {
+	text-align: center;
+}
+
+.routeNode {
+	fill: #4682B4;
+	stroke: #4A4A4A;
+}
+
+.distancePath {
+	stroke: #666666;
+	stroke-width: 1px;
+	fill: none;
+}
+
+.mapOutline {
+	fill: #070707;
+	stroke: #747474;
+	stroke-width: 3px;
+}
+
+.mapLink {
+	stroke:#ffffff;
+	stroke-width: .5px;
+}
+
+.mapNode {
+	fill: #666666;
+  stroke: #ffffff;
+	stroke-width: .5px;
+}
+
+.mapLinkActive {
+	fill:#ffffff;
+	stroke:#c13030;
+	stroke-width: 1px;
+}
+
+.mapNodeActive {
+	fill:#c13030;
+	stroke:#ffffff;
+	stroke-width:.5px;
+}
+
+.mapLabels {
+	font-size: 10px;
+  color: #ffffff;
+}
+
+p {
+	text-align: center;
+	font-size: .8em;
+}

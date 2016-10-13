@@ -1,0 +1,289 @@
+<html>
+<title> Hybrid waypoints/delauney pathfinding, pure SVG magicks </title>
+<head>
+<link rel="stylesheet" href="styles.css" type="text/css" >
+<link rel="stylesheet" href="font-awesome.min.css" type="text/css" >
+<script src="http://d3js.org/d3.v4.min.js"></script>
+<script type="text/javascript" src="eloquentUtils.js"></script>
+<script type="text/javascript" src="svghelp.js"></script>
+<!--<script type="text/javascript" src="enlroads.js"></script>-->
+</head>
+<body>
+<nav id="sideways-flex">
+    <div class="passive" id="output-button"> </div>
+    <div class="passive" id="doors-button"> DOORS </div>
+    <div class="passive" id="areas-button"> AREAS </div>
+    <div class="passive" id="close-button"> CLOSE </div>
+    <div class="passive" id="waypoints-button"> POI </div>
+    <div class="passive" id="delauney-button"> DELAUNEY </div>
+    <div class="passive" id="voronoi-button"> VORONOI </div>
+    <div class="passive" id="obstacle-button"> OBSTACLE </div>
+    <div class="passive" id="demo-button"> DEMO </div>
+</nav>
+<div id="mapContainer">
+	<svg width="1000" height="1000" viewBox="0 0 4799 4799" preserveAspectRatio="xMidYMax meet" id="svg-floorplan">
+		<g id="map-outline">
+			<path id="main-outline" class="areas" d="M 561.33 3473.05 L 1878.63 3473.05 L 1878.63 3340.0 L 2522.9 3340.0 L 2522.9 3473.05 L 3818 3473.05 L 3818 2909 L 4537 2909 L 4537 319 L 1878.63 319 L 1878.63 1271.42 L 2521 1271.42 L 2521 2568 L 1878.63 2568 L 1878.63 2191 L 561.33 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
+		</g>
+		<g id="areas">
+			<g class="wrapper">
+				<path id="area-1" class="areas" d="M 561 2521 L 1878 2521 L 1878 3473 L 561 3473 Z" fill="salmon" stroke="#6d0e04" opacity="0.2" stroke-width="10" />
+			</g>
+			<g class="wrapper">
+				<path id="area-2" class="areas" d="M 561 2191 L 1878 2191 L 1878 2521 L 561 2521 Z" fill="cornflowerblue" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-3" class="areas" d="M 1878 2568 L 2521 2568 L 2521 3340 L 1878 3340 Z" fill="#f0e150" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-4" class="areas" d="M 2521 3002 L 2521 3473 L 2920 3473 L 2920 3002 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-5" class="areas" d="M 2920 3002 L 3300 3002 L 3300 3473 L 2920 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-6" class="areas" d="M 3300 3002 L 3800 3002 L 3800 3473 L 3300 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-7" class="areas" d="M 1868 322 L 1868 1277 L 2521 1277 L 2521 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-8" class="areas" d="M 4230 1277 L 4538 1277 L 4538 322 L 4230 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+			<g class="wrapper">
+				<path id="area-9" class="areas" d="M 4230 1277 L 4538 1277 L 4538 1700 L 4230 1700 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+			</g>
+		</g>
+		<g id="doors"></g>
+		<g id="corners"></g>
+		<g id="waypoints"></g>
+		<g id="delauney"></g>
+		<g id="voronoi"></g>
+		<g id="obstacles">
+			<path id="obstacle-1" class="obstacle" d="M 860 3004 L 1060 3004 L 1060 3180 L 860 3180 Z" fill="#e42217" stroke="#e42217" fill-opacity="0.1" stroke-opacity="0.7" stroke-width="15"/>
+		</g>
+	</svg>
+</div>
+<div id="routeContainer"></div>
+<script>
+	window.onload = function() {
+
+	// the current state and state history (where is cursor and where was it). Updates with click events etc.
+	var state = [];
+	// the current place you are looking at in terms of area
+	var areaHov  = "open";
+	// "waypoints" -- pretty much all circles and their locations
+	var waypoints = [];
+	// "polys" -- an array of all the identified areas. Areas already in the SVG are automatically included. New areas are put on the end
+	var polys = [];
+	// coordinates of the area being drawn
+	var coords = [];
+
+	// what are we currently "doing" --- reduxed yo.
+	var currentEventListener = [];
+	// turns on the adding points to waypoints as doors
+	var doorsButton = document.getElementById("doors-button");
+	// turns on the adding points to waypoints as doors
+	var areasButton = document.getElementById("areas-button");
+	// turns on the adding points to waypoints as doors
+	var waypointsButton = document.getElementById("waypoints-button");
+	// closes polygons
+	var closeButton = document.getElementById("close-button");
+	// closes polygons
+	var voronoiButton = document.getElementById("voronoi-button");
+	// clears stuff for a demo
+	var demoButton = document.getElementById("demo-button");
+	
+	// entire SVG
+	var svg = document.getElementById("svg-floorplan");
+	// main outline of the building
+	var mo = document.getElementById("main-outline");
+	// grouping element containing doors
+	var doors = document.getElementById("doors");
+	// grouping element containing doors
+	var way = document.getElementById("waypoints");
+	// grouping element containing doors
+	var corn = document.getElementById("corners");
+
+	// create an SVG Point to use for the outline's turns
+	var pt = svg.createSVGPoint();
+
+	// put the listeners in this scope so we can get to them
+	var listenDoors = function(evt) {
+		// doors are added as salmon nodes
+		if (state.length >= 1){
+			circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon")
+	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov});
+		}
+	}
+
+	var listenWaypoints = function(evt) {
+	if (state.length >= 1){
+			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
+	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov});
+		}
+	}
+
+	var listenVoronoi = function(evt){
+		if (waypoints.length >= 1){
+			voronoiHelper(waypoints);
+		}
+	}
+
+	var listenDelauney = function(evt){
+		console.log("no delauney created yet")
+	}
+
+	var listenAreas = function(evt) {
+		// if no coordinates are defined yet
+		if (coords.length === 0) {
+			// check if there are any areas drawn but not set and if so, set their class to areas
+			var p0 = document.getElementsByClassName("drawing");	
+
+			if (p0.length > 0) {
+				var w2 = document.getElementById("waypoints");
+				for (var i = 0; i < p0.length; ++i) {
+					p0[i].setAttributeNS(null, "class", "areas");
+				}
+			}
+			// create a wrapper group and a blank path to continue drawing
+			var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+			g.setAttributeNS(null, "class", "wrapper");
+			var p = document.createElementNS("http://www.w3.org/2000/svg", "path")
+			p.setAttributeNS(null,"class", "drawing");
+			p.setAttributeNS(null, "stroke", "#a8a8a8");
+			p.setAttributeNS(null, "stroke-width", "3");
+			g.appendChild(p);
+			var a = document.getElementById("areas");
+			a.appendChild(g);
+			d3.selectAll(".removable").remove();
+		}
+		
+		// if there is some state already in the bank
+		if (state.length >=1){
+			// create a marker for the most recently drawn circle
+			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "30", "#a8a8a8");
+			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
+			var w = document.getElementById("waypoints").lastElementChild;
+			w.setAttributeNS(null, "class", "removable");
+			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov})
+		}
+	}
+
+	var listenDemo = function(evt) {
+		state = [];
+		waypoints = [];
+		polys = [];
+		coords = [];
+	}
+	
+	// put the existing areas reference and add hover text effect to see area and walkability 
+	areaHelper(polys, waypoints, areaHov);
+
+	// click doors and add them to the waypoints
+	doorsButton.addEventListener('click', function(evt) {
+		// we remove whatever event listener we previously assigned
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		// we assign the appropriate one, listenDoors
+		svg.addEventListener('click', listenDoors);
+		currentEventListener.push(listenDoors);
+		// change the color, yay.
+		d3.selectAll(".active").attr("class", "passive");
+		doorsButton.setAttribute('class', 'active');
+		console.log(currentEventListener)
+	})
+
+	// click doors and add them to the waypoints
+	areasButton.addEventListener('click', function(evt) {
+		var coords =[];
+		// we remove whatever event listener we previously assigned
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		// we assign the appropriate one, listenAreas
+		svg.addEventListener('click', listenAreas, function(coords){
+			coords.push("hi");
+			console.log(coords)
+		});
+		currentEventListener.push(listenAreas);
+		// change the color, yay.
+		d3.selectAll(".active").attr("class", "passive");
+		areasButton.setAttribute('class', 'active');
+	})
+
+	// click unique waypoints or POI and add them to the waypoints
+	waypointsButton.addEventListener('click', function(evt) {
+		console.log(currentEventListener)
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		svg.addEventListener('click', listenWaypoints);
+		currentEventListener.push(listenWaypoints);
+		d3.selectAll(".active").attr("class", "passive");
+		waypointsButton.setAttribute('class', 'active');
+		console.log(currentEventListener)
+	})
+
+	// click demo to generate a bunch of waypoints and clear the things
+	demoButton.addEventListener('click', function(evt) {
+		console.log(currentEventListener)
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		svg.addEventListener('click', listenDemo);
+		currentEventListener.push(listenDemo);
+		d3.selectAll(".active").attr("class", "passive");
+		demoButton.setAttribute('class', 'active');
+		console.log(currentEventListener)
+	})
+
+	// generate voronoi waypoints for the main outline or a selected area
+	voronoiButton.addEventListener('click', function(evt) {
+		console.log(currentEventListener)
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		svg.addEventListener('click', listenVoronoi);
+		currentEventListener.push(listenVoronoi);
+		d3.selectAll(".active").attr("class", "passive");
+		voronoiButton.setAttribute('class', 'active');
+		console.log(currentEventListener)
+	})
+
+	// close event listener doesn't matter the same way. It needs to be active whenever the areas event listener is active, but if its active at some other time, it's not going to hurt you.
+	closeButton.addEventListener('click', function(evt){
+		if (coords.length >=3){
+			var line = d3.line()
+			var d3path = line(coords);
+			d3path = d3path.split("M").join("M ");
+			d3path = d3path.split("L").join(" L ");
+			d3path += " Z";
+		}
+		var p = document.getElementsByClassName("drawing")[0];
+		d3path.split(",").join(" ");
+		p.setAttributeNS(null, "d", d3path);
+		p.setAttributeNS(null, "class", "areas");
+		var counter= document.getElementById("areas").length;
+		simplePolygonHelper(p, counter, polys)
+		coords = [];
+	})
+
+	// collect mouse events all the time
+	svg.addEventListener('mousemove', function(evt) {
+      var loc = cursorPoint(evt, pt, svg, state);
+      // Use loc.x and loc.y here
+      var out = document.getElementById("output-button");
+      out.textContent = state[state.length-1].x.toFixed(0) + ", " + state[state.length-1].y.toFixed(0);
+      
+    })
+	
+}
+
+
+</script>
+<!--<script type="text/javascript" src="enlvis.js"></script>-->
+</body>
+
+</html>
