@@ -23,6 +23,7 @@
 <div id="mapContainer">
 	<svg width="1000" height="1000" viewBox="0 0 4799 4799" preserveAspectRatio="xMidYMax meet" id="svg-floorplan">
 		<g id="map-outline">
+			<!-- In the SVG from the back end this is the one with the path.getTotalLength is the longest.-->
 			<path id="main-outline" class="areas" d="M 561.33 3473.05 L 1878.63 3473.05 L 1878.63 3340.0 L 2522.9 3340.0 L 2522.9 3473.05 L 3818 3473.05 L 3818 2909 L 4537 2909 L 4537 319 L 1878.63 319 L 1878.63 1271.42 L 2521 1271.42 L 2521 2568 L 1878.63 2568 L 1878.63 2191 L 561.33 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
 		</g>
 		<g id="areas">
@@ -68,32 +69,32 @@
 <script>
 	window.onload = function() {
 
-	// current and prior cursor locations
+	// current and prior cursor locations. Click "demo" to clear.
 	var state = [];
-	// what area the mouse is currently hovering over
+	// Areas over which the mouse has hovered. It is "null" if he is outside of the bounds
 	var areaHov = [];
-	// all nodes, their locations, the area associated with, and the type
+	// all nodes, their locations {.x, .y}, the area associated with (area-1, area-2, etc.), and the type (door, area, corner, etc.)
 	var waypoints = [];
-	// "polys" -- an array of all the identified areas. Areas already in the SVG are automatically included. Would be useful on the backend but maybe useless here.
+	// "polys" -- an array of all the identified areas. Areas already in the SVG are automatically included. Would be useful on the backend but maybe useless here. Keeping it around unless otherwise noted. 
 	var polys = [];
 	// coordinates of the area being drawn. Upon "close", this empties
 	var coords = [];
 
-	// what function are we currently "doing" --- reduxed yo.
+	// what function are we currently "doing" - removes the event listener of the functions we are NOT currently doing
 	var currentEventListener = [];
-	// turns on the adding points to waypoints as doors
+	// turns on the adding points to waypoints list as doors
 	var doorsButton = document.getElementById("doors-button");
-	// turns on the adding points to waypoints as doors
+	// turns on drawing areas
 	var areasButton = document.getElementById("areas-button");
-	// turns on the adding points to waypoints as doors
+	// turns on adding points of interest/walk points
 	var waypointsButton = document.getElementById("waypoints-button");
 	// closes polygons
 	var closeButton = document.getElementById("close-button");
-	// closes generates voronoi triangles and infill waypoints
+	// generates voronoi triangles (or shows them) if the selected endpoint is in fact, not an endpoint
 	var voronoiButton = document.getElementById("voronoi-button");
 	// generates triangulation per area
 	var delaunayButton = document.getElementById("delaunay-button");
-	// clears stuff for a demo
+	// clears stuff for a demonstration, fill in with new stuff
 	var demoButton = document.getElementById("demo-button");
 	
 	// entire SVG
@@ -104,8 +105,6 @@
 	var doors = document.getElementById("doors");
 	// grouping element for all waypoints
 	var way = document.getElementById("waypoints");
-	// grouping element containing doors
-	var corn = document.getElementById("corners");
 
 	// create an SVG Point to use for the outline's turns
 	var pt = svg.createSVGPoint();
@@ -120,21 +119,24 @@
 	}
 
 	var listenWaypoints = function(evt) {
-		if (state.length >= 1){
+		if (state.length >= 1) {
 			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
 	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
 		}
 	
 	}
 
-	var listenVoronoi = function(evt){
-		console.log("no")
+	var listenVoronoi = function(evt) {
+		if (waypoints.length >= 1) {
+			var areaHov = areaHov[areaHov.length-1]
+			voronoiHelper(waypoints, areaHov);
+		}
 	}
 
-	var listenDelaunay = function(evt){
-		if (waypoints.length >= 1){
-			
-			delaunayHelper(waypoints, areaHov[areaHov.length-1]);
+	var listenDelaunay = function(evt) {
+		if (waypoints.length >= 1) {
+			var areaHov = evt.target.getAttributeNS(null, "id");
+			delaunayHelper(waypoints, areaHov);
 		}
 	}
 
@@ -170,15 +172,18 @@
 			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
 			var w = document.getElementById("waypoints").lastElementChild;
 			w.setAttributeNS(null, "class", "removable");
+			console.log(w)
 			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov[areaHov.length-1]})
 		}
 	}
 
 	var listenDemo = function(evt) {
+		// clear out all the things, and do the area helper set up again. 
 		state = [];
 		waypoints = [];
 		polys = [];
 		coords = [];
+		areaHelper(polys, waypoints, areaHov)
 	}
 	
 	// put the existing areas reference and add hover text effect to see area and walkability 
@@ -196,7 +201,6 @@
 		// change the color, yay.
 		d3.selectAll(".active").attr("class", "passive");
 		doorsButton.setAttribute('class', 'active');
-		console.log(currentEventListener)
 	})
 
 	// click doors and add them to the waypoints

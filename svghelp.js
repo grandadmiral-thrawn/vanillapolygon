@@ -1,6 +1,6 @@
 var waypointFactory = function(x, y, type, areaHov) {
 	// create a waypoint and give it a location,type, and area association
-	return {x: x, y: y, type: type, area: areaHov[areaHov.length-1]}
+	return {x: x, y: y, type: type, area: areaHov}
 }
 
 var cursorPoint = function (evt, pointel, svgel, svgstateel) {
@@ -67,14 +67,14 @@ var delaunayHelper = function(waypoints, areaHov) {
 	// draws delaunay Triangles 
 
 	function redrawTriangle(triangle) {
-  		triangle.classed("primary", function(d) { 
-  			return d[0] === s2[0] || d[1] === s2[0] || d[2] === s2[0]; 
-  		})
-      .attr("d", function(d) { return "M" + d.join("L") + "Z"; });
+  	triangle
+      .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+      .attr("class", "drawn")
 	}
 
 	function redraw() {
   		var diagram = voronoi(s2);
+  		console.log(s2)
   		triangle = triangle.data(diagram.triangles()), triangle.exit().remove();
   		triangle = triangle.enter().append("path").merge(triangle).call(redrawTriangle);
   		link = link.data(diagram.links()), link.exit().remove();
@@ -83,33 +83,28 @@ var delaunayHelper = function(waypoints, areaHov) {
 	}
 
 	function redrawLink(link) {
-  		link.classed("primary", function(d) { return d.source === s2[0] || d.target === s2[0]; })
+  	link
       .attr("x1", function(d) { return d.source[0]; })
       .attr("y1", function(d) { return d.source[1]; })
       .attr("x2", function(d) { return d.target[0]; })
-      .attr("y2", function(d) { return d.target[1]; });
+      .attr("y2", function(d) { return d.target[1]; })
+      .attr("class", "drawn")
 	}
 	
 	function redrawSite(site) {
   	site
       .attr("cx", function(d) { return d[0]; })
-      .attr("cy", function(d) { return d[1]; });
+      .attr("cy", function(d) { return d[1]; })
 	}
 
 	//testdata
 	var voronoi = d3.voronoi();
-
-	console.log(areaHov)
-	console.log(waypoints)
 	var s = waypoints.filter(function(x){if (x.area === areaHov){ return x}})
-	console.log(s)
 	var s2 = s.map(function(d) {return [d.x, d.y]})
-	console.log(s2)
-	console.log(voronoi.triangles(s2))
 
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
-		.selectAll("path")
+		.selectAll(".triangles")
 		.data(voronoi.triangles(s2))
 		.enter()
 		.append("path")
@@ -117,21 +112,11 @@ var delaunayHelper = function(waypoints, areaHov) {
 
 	var link = d3.select("#voronoi")
 		.attr("class", "links")
-		.selectAll("line")
+		.selectAll(".links")
 		.data(voronoi.links(s2))
 		.enter().append("line")
 		.call(redrawLink);
-	//var corners = results.map(function(x){return x[0]})
-	//var triangles = voronoi.triangles(corners);
-	//document.getElementById("corners");
-	//for (var i = 0; i < results.length; ++i) {
-	//circleFactory(svgel, results[i][0][0], results[i][0][1], "50")
-	//}
-	//}
-
-	//var pA = parsePath(svgel);
-	// also outputs those paths to an array 
-	//viewPaths(null, pA);
+	
 }
 
 
@@ -159,6 +144,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
 			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", "open")
+			console.log(waypoint)
 			waypoints.push(waypoint)
 		}
 
@@ -210,11 +196,12 @@ var areaHelper = function(polys, waypoints, areaHov) {
 		var fc = areas.children[i].children[0].getAttributeNS(null, "fill");
 		var id = areas.children[i].children[0].getAttributeNS(null, "id");
 
+		console.log(id)
 		// draw those corners onto the data
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
-			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", id)
-			console.log(id)
+			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "corners", id)
+			console.log(waypoint)
 			waypoints.push(waypoint)
 		}
 		
