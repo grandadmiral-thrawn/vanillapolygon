@@ -97,10 +97,14 @@ var delaunayHelper = function(waypoints, areaHov) {
       .attr("cy", function(d) { return d[1]; })
 	}
 
-	//testdata
+	//Make a voronoi object
 	var voronoi = d3.voronoi();
-	var s = waypoints.filter(function(x){if (x.area === areaHov){ return x}})
-	var s2 = s.map(function(d) {return [d.x, d.y]})
+	// all who are in that areas
+	var sa = waypoints.filter(function(x){if (x.area === areaHov){ return x}});
+	// all the doors, even those not in that area
+	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
+	var s = sa.concat(sd);
+	var s2 = s.map(function(d) {return [d.x, d.y]});
 
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
@@ -116,8 +120,7 @@ var delaunayHelper = function(waypoints, areaHov) {
 		.data(voronoi.links(s2))
 		.enter().append("line")
 		.call(redrawLink);
-	
-}
+	}
 
 
 var areaHelper = function(polys, waypoints, areaHov) {

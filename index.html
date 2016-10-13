@@ -96,6 +96,8 @@
 	var delaunayButton = document.getElementById("delaunay-button");
 	// clears stuff for a demonstration, fill in with new stuff
 	var demoButton = document.getElementById("demo-button");
+	// identifies the 
+	var obstacleButton = document.getElementById("obstacle-button");
 	
 	// entire SVG
 	var svg = document.getElementById("svg-floorplan");
@@ -123,6 +125,17 @@
 			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
 	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
 		}
+	}
+
+	var listenObstacles = function(evt) {
+		var obs = document.getElementById("obstacles");
+		for (var i = 0; i < obstacles.children.length; ++ i) {
+			console.log(parsePath(obstacles.children[i]))
+		}
+		// if (state.length >= 1) {
+		// 	circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
+	 //   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
+		// }
 	
 	}
 
@@ -229,6 +242,17 @@
 		currentEventListener.push(listenWaypoints);
 		d3.selectAll(".active").attr("class", "passive");
 		waypointsButton.setAttribute('class', 'active');
+	})
+
+	// click unique waypoints or POI and add them to the waypoints
+	obstaclesButton.addEventListener('click', function(evt) {
+		if (currentEventListener.length >= 1) {
+			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
+		}
+		svg.addEventListener('click', listenObstacles);
+		currentEventListener.push(listenObstacles);
+		d3.selectAll(".active").attr("class", "passive");
+		obstaclesButton.setAttribute('class', 'active');
 	})
 
 	// click demo to generate a bunch of waypoints and clear the things
