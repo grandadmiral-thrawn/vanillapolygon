@@ -29,6 +29,36 @@ var circleFactory = function(appendTo, x, y, r, fillcolor) {
 	appendTo.appendChild(circle)
 }
 
+var voronoiHelper = function(waypoints, aH) {
+	//Make a voronoi object
+	var voronoi = d3.voronoi();
+	centroidMaker(waypoints, aH)
+
+	// all who are in that areas
+	var s = waypoints.filter(function(x){if (x.area === aH){ return x}});
+	// all the doors, even those not in that area
+	//var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
+	//var s = sa.concat(sd);
+	var s2 = s.map(function(d) {return [d.x, d.y]});
+
+	function drawCells(centroids) {
+		console.log(centroids)
+  		centroids
+      	.attr("d", function(d) { console.log(d); if (d[0]==null){return null} else {return d == null ? null : "M " + d.join(" L" ) + "Z"; }})
+      	.attr("class", "drawn")
+      	.style("fill","none")
+      	.attr("stroke","yellow")
+      	.attr("stroke-width","2")
+		}
+
+	var centroids= d3.selectAll("#centroids")
+		.selectAll(".centroids")
+		.data(voronoi.polygons(s2))
+		.enter()
+		.append("path")
+		.call(drawCells)
+	}
+
 var parsePath = function(element) {
 	// parses just one path, in the syntax that would be created by someone actually writing an SVG
 	var str = element.getAttributeNS(null, "d")
@@ -62,6 +92,23 @@ var parsePath = function(element) {
 	return pointArrays;
 }
 
+var centroidMaker = function(waypoints, areaHov) {
+	// puts a centroid point in a room if there isn't a specific point specified to go to
+	var s = waypoints.filter(function(x){if ((x.type === "poi") && (x.area === areaHov)){return x}});
+	if (s.length === 0) {
+		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area === areaHov)){return x}});
+		var sd = waypoints.filter(function(x){if ((x.type === "corners") && (x.area === areaHov)){return x}});
+		var s = sd.concat(so);
+		console.log(s)
+		var polygon = s.map(function(x){return [x.x, x.y]})
+
+		var centroid = d3.polygonCentroid(polygon);
+
+		var ct = document.getElementById("centroids");
+		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue");
+		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: areaHov})
+	}
+}
 
 var delaunayHelper = function(waypoints, areaHov) {
 	// draws delaunay Triangles 
@@ -103,6 +150,7 @@ var delaunayHelper = function(waypoints, areaHov) {
 	var sa = waypoints.filter(function(x){if (x.area === areaHov){ return x}});
 	// all the doors, even those not in that area
 	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
+	//var sd = [];
 	var s = sa.concat(sd);
 	var s2 = s.map(function(d) {return [d.x, d.y]});
 
@@ -242,7 +290,6 @@ var areaHelper = function(polys, waypoints, areaHov) {
 				evt.target.parentNode.children[1].setAttributeNS(null, "class", "details");
 				
 				areaHov.push(evt.target.parentNode.children[0].getAttributeNS(null, "id"));
-				console.log(areaHov)
 			});
 
 			// hide them on mouse out, set the hovered area to "open". if you go right into another area, it will get set to that name, otherwise, it will be open
@@ -335,7 +382,6 @@ var polyArea = function(poly){
 var listenDemo = function(evt) {
 	console.log(evt.target)
 }
-
 
 
 var pointInPolygon = function (point, vs) {

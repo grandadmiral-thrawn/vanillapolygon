@@ -148,3 +148,8 @@ p {
 	text-align: center;
 	font-size: .8em;
 }
+
+.active1 circle {
+  stroke: "#fff;
+  stroke-width: 2px;
+}

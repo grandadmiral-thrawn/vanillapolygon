@@ -15,7 +15,7 @@
     <div class="passive" id="areas-button"> AREAS </div>
     <div class="passive" id="close-button"> CLOSE </div>
     <div class="passive" id="waypoints-button"> POI </div>
-    <div class="passive" id="delaunay-button"> delaunay </div>
+    <div class="passive" id="delaunay-button"> DELAUNEY </div>
     <div class="passive" id="voronoi-button"> VORONOI </div>
     <div class="passive" id="obstacle-button"> OBSTACLE </div>
     <div class="passive" id="demo-button"> DEMO </div>
@@ -57,6 +57,8 @@
 		</g>
 		<g id="doors"></g>
 		<g id="corners"></g>
+		<g id="centroids"></g>
+		<g id="cells"></g>
 		<g id="waypoints"></g>
 		<g id="delaunay"></g>
 		<g id="voronoi"></g>
@@ -96,7 +98,7 @@
 	var delaunayButton = document.getElementById("delaunay-button");
 	// clears stuff for a demonstration, fill in with new stuff
 	var demoButton = document.getElementById("demo-button");
-	// identifies the 
+	// identifies the corners of obstacles as necessary "waypoints"
 	var obstacleButton = document.getElementById("obstacle-button");
 	
 	// entire SVG
@@ -121,6 +123,7 @@
 	}
 
 	var listenWaypoints = function(evt) {
+		// waypoints are added as yellow nodes
 		if (state.length >= 1) {
 			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
 	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
@@ -128,21 +131,22 @@
 	}
 
 	var listenObstacles = function(evt) {
+		// obstacles are added as red nodes. Upon drawing the obstacle is avoided
 		var obs = document.getElementById("obstacles");
-		for (var i = 0; i < obstacles.children.length; ++ i) {
-			console.log(parsePath(obstacles.children[i]))
+		for (var i = 0; i < obs.children.length; ++ i) {
+			var obscoords = parsePath(obstacles.children[i]);
+			for (var ii = 0; ii < obscoords.length; ++ ii) {
+				console.log(obscoords[ii][0][0])
+				circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red");
+				waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area:areaHov[areaHov.length-1]})
+			}			
 		}
-		// if (state.length >= 1) {
-		// 	circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
-	 //   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
-		// }
-	
 	}
 
 	var listenVoronoi = function(evt) {
 		if (waypoints.length >= 1) {
-			var areaHov = areaHov[areaHov.length-1]
-			voronoiHelper(waypoints, areaHov);
+			var aH = areaHov[areaHov.length-1]
+			voronoiHelper(waypoints, aH);
 		}
 	}
 
@@ -245,14 +249,14 @@
 	})
 
 	// click unique waypoints or POI and add them to the waypoints
-	obstaclesButton.addEventListener('click', function(evt) {
+	obstacleButton.addEventListener('click', function(evt) {
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
 		svg.addEventListener('click', listenObstacles);
 		currentEventListener.push(listenObstacles);
 		d3.selectAll(".active").attr("class", "passive");
-		obstaclesButton.setAttribute('class', 'active');
+		obstacleButton.setAttribute('class', 'active');
 	})
 
 	// click demo to generate a bunch of waypoints and clear the things
