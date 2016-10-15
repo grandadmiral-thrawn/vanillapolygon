@@ -93,8 +93,9 @@ var parsePath = function(element) {
 }
 
 var centroidMaker = function(waypoints, areaHov) {
-	// puts a centroid point in a room if there isn't a specific point specified to go to
+	// puts a centroid point in the room if there's not a specific point already defined
 	var s = waypoints.filter(function(x){if ((x.type === "poi") && (x.area === areaHov)){return x}});
+	
 	if (s.length === 0) {
 		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area === areaHov)){return x}});
 		var sd = waypoints.filter(function(x){if ((x.type === "corners") && (x.area === areaHov)){return x}});
@@ -104,7 +105,7 @@ var centroidMaker = function(waypoints, areaHov) {
 
 		var centroid = d3.polygonCentroid(polygon);
 
-		var ct = document.getElementById("centroids");
+		var ct = document.getElementById("generated");
 		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue");
 		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: areaHov})
 	}
@@ -112,7 +113,7 @@ var centroidMaker = function(waypoints, areaHov) {
 
 var delaunayHelper = function(waypoints, areaHov) {
 	// draws delaunay Triangles 
-
+	console.log(waypoints)
 	function redrawTriangle(triangle) {
   	triangle
       .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
@@ -402,3 +403,18 @@ var pointInPolygon = function (point, vs) {
         }
         return inside;
       }
+
+var getMapLocations = function(waypoints) {
+    var mapLocations = []
+    if (waypoints && waypoints.length >=1){
+        for (var i = 0 ; i < waypoints.length ; ++ i) {
+            var id = waypoints[i].area + "_" + waypoints[i].type +"-"+ waypoints[i].x + "-" + waypoints[i].y;
+            var obj = {x: waypoints[i].x, y: waypoints[i].y, id: id}
+            mapLocations.push(obj)
+            console.log(mapLocations)
+        }
+    } else {
+        console.log("waypoints were not logged!")
+    }
+
+}

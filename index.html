@@ -6,7 +6,7 @@
 <script src="http://d3js.org/d3.v4.min.js"></script>
 <script type="text/javascript" src="eloquentUtils.js"></script>
 <script type="text/javascript" src="svghelp.js"></script>
-<!--<script type="text/javascript" src="enlroads.js"></script>-->
+<script type="text/javascript" src="enlroads.js"></script>
 </head>
 <body>
 <nav id="sideways-flex">
@@ -58,6 +58,7 @@
 		<g id="doors"></g>
 		<g id="corners"></g>
 		<g id="centroids"></g>
+		<g id="generated"></g>
 		<g id="cells"></g>
 		<g id="waypoints"></g>
 		<g id="delaunay"></g>
@@ -136,7 +137,6 @@
 		for (var i = 0; i < obs.children.length; ++ i) {
 			var obscoords = parsePath(obstacles.children[i]);
 			for (var ii = 0; ii < obscoords.length; ++ ii) {
-				console.log(obscoords[ii][0][0])
 				circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red");
 				waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area:areaHov[areaHov.length-1]})
 			}			
@@ -189,18 +189,29 @@
 			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
 			var w = document.getElementById("waypoints").lastElementChild;
 			w.setAttributeNS(null, "class", "removable");
-			console.log(w)
 			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov[areaHov.length-1]})
 		}
 	}
 
 	var listenDemo = function(evt) {
 		// clear out all the things, and do the area helper set up again. 
-		state = [];
-		waypoints = [];
-		polys = [];
-		coords = [];
-		areaHelper(polys, waypoints, areaHov)
+		// state = [];
+		// waypoints = [];
+		// polys = [];
+		// coords = [];
+		// areaHelper(polys, waypoints, areaHov)
+		var bob = pl()
+		var roads = {};
+		for (var i = 0; i < bob.length; ++i) {
+			var loc = bob[i].name.split("-");
+			var fl = {x: loc[1], y:loc[2]}
+			var tl = {x: loc[4], y: loc[5]}
+			var dist = bob.length;
+			makeRoad(fl, tl, dist)
+		}
+		console.log(bob)
+		var ml1 = getMapLocations(waypoints);
+		console.log(ml1)
 	}
 	
 	// put the existing areas reference and add hover text effect to see area and walkability 
@@ -268,7 +279,7 @@
 		currentEventListener.push(listenDemo);
 		d3.selectAll(".active").attr("class", "passive");
 		demoButton.setAttribute('class', 'active');
-		console.log(currentEventListener)
+		
 	})
 
 	// generate voronoi waypoints for the main outline or a selected area
@@ -325,7 +336,7 @@
 
 
 </script>
-<!--<script type="text/javascript" src="enlvis.js"></script>-->
+
 </body>
 
 </html>
