@@ -6,6 +6,50 @@ var shortRoute = {};
 var to = "",
     from = "";
 
+function removeWhiteSpace(str)
+{
+  return str.replace(/\s/g, '');
+}
+
+var nodeClicked = function(evt) {   
+  var place = evt.target.getAttributeNS(null,"id");
+  //console.log(place)
+  //d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
+  var p =document.getElementById(place);
+  p.setAttributeNS(null,"class","mapNodeActive")
+    console.log(from)
+    console.log(to)
+    from = to;
+    to = place;
+
+    if (from != "") {
+      shortRoute = shortestRoute(from,to);
+      updateMap();
+      drawStraightRoute();
+    }    
+}
+
+var convertRoute = function(route) 
+{
+var newRoute = [];
+var lastPlace = "";
+
+map(function(place){
+    newRoute.push({place: place, distanceFromLast: 0, distanceFromStart: 0});
+    if(roads[lastPlace]) {
+      forEach(roads[lastPlace],function(element){
+        if(element.to == place) {
+            newRoute[newRoute.length-1].distanceFromLast = element.distance;
+            newRoute[newRoute.length-1].distanceFromStart = newRoute[newRoute.length-2].distanceFromStart + element.distance;
+          }
+      });
+    }
+    lastPlace = place;
+},route.places);
+
+return newRoute;
+} 
+
 var placeKeysCB = function(err, roads, mapLocations, placeKeys, mapRoads) {
   if(err) {
     console.log(err)
@@ -16,13 +60,17 @@ var placeKeysCB = function(err, roads, mapLocations, placeKeys, mapRoads) {
   // Get our Links between Nodes/Places
   // Nodes, and PlaceKeys are in the same order, so we can lookup via the index and for our purposes assume they are 1:1
   forEach(mapLocations, function(place){
-
       forEach(roads[place.x.toFixed(0) + "," + place.y.toFixed(0)], function(road) {
-        
         mapRoads.push({source: place, target: mapLocations[placeKeys.indexOf(road.to)], dist: road.distance});
       });
   });
-  console.log(mapRoads)
+  
+  var nodes = document.getElementsByClassName("mapNode");
+  console.log(nodes)
+  for (var i = 0; i < nodes.length; ++i) {
+    console.log(nodes[i])
+    nodes[i].addEventListener("click", nodeClicked)
+  }
 }
 
 var getMapLocations = function(err, waypoints, roads, placeKeys, mapRoads) {
@@ -37,7 +85,7 @@ var getMapLocations = function(err, waypoints, roads, placeKeys, mapRoads) {
     if (waypoints[i].area !== "open") {
       var id = waypoints[i].area + "_" + waypoints[i].type +"-"+ waypoints[i].x + "-" + waypoints[i].y;
       var obj = {x: waypoints[i].x, y: waypoints[i].y, id: id}
-      //console.log(obj)
+      
       mapLocations.push(obj)
     } 
   }
@@ -78,7 +126,6 @@ var pl = function(waypoints) {
 // functionally create a road from a point to another point
 function makeRoad(from, to, length)
 {
-  console.log(from)
   function addRoad(from, to)
     {
         if(!(from in roads))

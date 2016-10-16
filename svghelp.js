@@ -4,6 +4,7 @@ var waypointFactory = function(x, y, type, areaHov) {
 }
 
 var randomPointFiller = function(waypoints) {
+	// puts at least a centroid in the main area
 	var areas = document.getElementById("areas");
 	var ct = document.getElementById("generated");
 	var obs = document.getElementById("obstacles");
@@ -12,7 +13,7 @@ var randomPointFiller = function(waypoints) {
 	for (var i = 0; i < obs.children.length; ++ i) {
 		var obscoords = parsePath(obstacles.children[i]);
 		for (var ii = 0; ii < obscoords.length; ++ ii) {
-			circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red");
+			circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red", "mapNode");
 			// we can't know where the obstacle is in the bulk approach so we just give it a temp
 			waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area: "temp"})
 		}			
@@ -24,31 +25,33 @@ var randomPointFiller = function(waypoints) {
 		var ptsx = pts.map(function(x){return [x[0][0], x[0][1]]})
 		var centroid = d3.polygonCentroid(ptsx);
 		
-		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue");
+		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue", "mapNode");
 		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: p.children[0].getAttributeNS(null, "id")});
 	}
 	//ct.setAttributeNS(null, "class", "hidden-centroid");
 }
 
 var mainAreaFiller = function(waypoints) {
+	//creates the main area centroid
 	var area = document.getElementById("main-outline");
 	var pts = parsePath(area)
 	var ptsx = pts.map(function(x){return [x[0][0], x[0][1]]})
 	var ct = document.getElementById("generated");
 	var centroid = d3.polygonCentroid(ptsx);
-	circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue");
+	circleFactory(ct, Number(centroid[0].toFixed(0)), Number(centroid[1].toFixed(0)), "40", "cornflowerblue", "mapNode");
 	waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: "open"});
 }
 
 var mainAreaDelauneyDemo = function(waypoints) {
 	var areas = document.getElementById("areas");
+	var voronoi = d3.voronoi();
+	var pts = waypoints.map(function(x){return [x.x, x.y]})
+	
 	for (var i = 0; i < areas.children.length; ++i) {
 		var id = areas.children[i].children[0].getAttributeNS(null,"id");
 		delaunayHelper(waypoints, id);
 	}
-	var voronoi = d3.voronoi();
-	var pts = waypoints.map(function(x){return [x.x, x.y]})
-
+	delaunayHelper(waypoints,"open")
 
 	function drawCells(centroids) {
   		centroids
@@ -58,10 +61,11 @@ var mainAreaDelauneyDemo = function(waypoints) {
       		return d == null ? null : "M " + d.join(" L" ) + "Z"; 
       	}
       	})
-      	.attr("class", "drawn")
+      	.attr("class", "mapLinks")
       	.style("fill","none")
-      	.attr("stroke","yellow")
+      	.attr("stroke","cyan")
       	.attr("stroke-width","2")
+      	.attr("stroke-dasharray","20,20")
 	}
 
 	var centroids= d3.selectAll("#svg-floorplan")
@@ -71,7 +75,7 @@ var mainAreaDelauneyDemo = function(waypoints) {
 	centroids.selectAll(".centroids")
 		.data(voronoi.polygons(pts))
 		.enter()
-		.append("g")
+		.append("path")
 		.call(drawCells)
 }
 
@@ -88,7 +92,7 @@ var cursorPoint = function (evt, pointel, svgel, svgstateel) {
   	stateify(null, pointel.matrixTransform(svgel.getScreenCTM().inverse()));
 };
 
-var circleFactory = function(appendTo, x, y, r, fillcolor) {
+var circleFactory = function(appendTo, x, y, r, fillcolor, givenClass) {
 	// appends circles to something given cx, cy, r, and what to append to
 	var circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
 	circle.setAttributeNS(null, "r", r);
@@ -98,6 +102,8 @@ var circleFactory = function(appendTo, x, y, r, fillcolor) {
 	circle.setAttributeNS(null, "opacity", 1);
 	circle.setAttributeNS(null, "stroke", "black");
 	circle.setAttributeNS(null, "stroke-opacity", "1")
+	circle.setAttributeNS(null, "class", givenClass)
+	circle.setAttributeNS(null, "id", x + "," + y)
 	appendTo.appendChild(circle)
 }
 
@@ -117,7 +123,7 @@ var voronoiHelper = function(waypoints, aH) {
 		console.log(centroids)
   		centroids
       	.attr("d", function(d) { console.log(d); if (d[0]==null){return null} else {return d == null ? null : "M " + d.join(" L" ) + "Z"; }})
-      	.attr("class", "drawn")
+      	.attr("class", "mapLinks")
       	.style("fill","none")
       	.attr("stroke","yellow")
       	.attr("stroke-width","2")
@@ -178,7 +184,7 @@ var centroidMaker = function(waypoints, areaHov) {
 		var centroid = d3.polygonCentroid(polygon);
 
 		var ct = document.getElementById("generated");
-		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue");
+		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue", "mapNode");
 		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: areaHov})
 	}
 }
@@ -189,12 +195,11 @@ var delaunayHelper = function(waypoints, areaHov) {
 	function redrawTriangle(triangle) {
   	triangle
       .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
-      .attr("class", "drawn")
+      .attr("class", "mapLinks")
 	}
 
 	function redraw() {
   		var diagram = voronoi(s2);
-  		console.log(s2)
   		triangle = triangle.data(diagram.triangles()), triangle.exit().remove();
   		triangle = triangle.enter().append("path").merge(triangle).call(redrawTriangle);
   		link = link.data(diagram.links()), link.exit().remove();
@@ -208,7 +213,7 @@ var delaunayHelper = function(waypoints, areaHov) {
       .attr("y1", function(d) { return d.source[1]; })
       .attr("x2", function(d) { return d.target[0]; })
       .attr("y2", function(d) { return d.target[1]; })
-      .attr("class", "drawn")
+      .attr("class", "mapLinks")
 	}
 	
 	function redrawSite(site) {
@@ -219,6 +224,7 @@ var delaunayHelper = function(waypoints, areaHov) {
 
 	//Make a voronoi object
 	var voronoi = d3.voronoi();
+	
 	// all who are in that areas
 	var sa = waypoints.filter(function(x){if (x.area === areaHov){ return x}});
 	// all the doors, even those not in that area
@@ -230,6 +236,11 @@ var delaunayHelper = function(waypoints, areaHov) {
 	if (areaHov === "area-1") {
 		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area ==="temp")){return x}});
 		var s = s.concat(so);
+	}
+
+	if (areaHov === "open") {
+		var s = waypoints.filter(function(x){if ((x.type !== "corners") && (x.area ==="open")){return x}});
+		//var s = s.concat(so);
 	}
 
 	var s2 = s.map(function(d) {return [d.x, d.y]});
@@ -273,7 +284,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 		var fc = "cornflowerblue";
 
 		for (var ii = 0; ii < corners.length; ++ii) {
-			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
+			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc, "mapNode")
 			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "areas", "open")
 			waypoints.push(waypoint)
 		}
@@ -328,12 +339,10 @@ var areaHelper = function(polys, waypoints, areaHov) {
 
 		// draw those corners onto the data
 		for (var ii = 0; ii < corners.length; ++ii) {
-			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc)
+			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc, "mapNode")
 			var waypoint = waypointFactory(corners[ii][0][0], corners[ii][0][1], "corners", id)
 			waypoints.push(waypoint)
 		}
-
-
 		
 		if (areas.children[i].children[0].getAttributeNS(null, "class") === "areas") {
 			

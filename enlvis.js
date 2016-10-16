@@ -2,11 +2,11 @@
 // var mapWidth = 900;
 // var mapHeight = 600;
 // var nodeSize = 7;
-// var mapRoads = [];
-// var placeKeys = [];
-// var shortRoute = {};
-// var to = "",
-//     from = "";
+var mapRoads = [];
+var placeKeys = [];
+var shortRoute = {};
+var to = "",
+    from = "";
 
 // var getMapLocations = function(waypoints) {
 //     var mapLocations = []
@@ -54,28 +54,28 @@
 // console.log(mapRoads)
 
 
-// //Translate the results of the Shortest path finder in to a friendlier format for D3 to visualize
-// //lookup all of the places in our roads object, and calculate distances from last place, and from start
-// function convertRoute(route) 
-// {
-// var newRoute = [];
-// var lastPlace = "";
+//Translate the results of the Shortest path finder in to a friendlier format for D3 to visualize
+//lookup all of the places in our roads object, and calculate distances from last place, and from start
+function convertRoute(route) 
+{
+var newRoute = [];
+var lastPlace = "";
 
-// map(function(place){
-//     newRoute.push({place: place, distanceFromLast: 0, distanceFromStart: 0});
-//     if(roads[lastPlace]) {
-//       forEach(roads[lastPlace],function(element){
-//         if(element.to == place) {
-//             newRoute[newRoute.length-1].distanceFromLast = element.distance;
-//             newRoute[newRoute.length-1].distanceFromStart = newRoute[newRoute.length-2].distanceFromStart + element.distance;
-//           }
-//       });
-//     }
-//     lastPlace = place;
-// },route.places);
+map(function(place){
+    newRoute.push({place: place, distanceFromLast: 0, distanceFromStart: 0});
+    if(roads[lastPlace]) {
+      forEach(roads[lastPlace],function(element){
+        if(element.to == place) {
+            newRoute[newRoute.length-1].distanceFromLast = element.distance;
+            newRoute[newRoute.length-1].distanceFromStart = newRoute[newRoute.length-2].distanceFromStart + element.distance;
+          }
+      });
+    }
+    lastPlace = place;
+},route.places);
 
-// return newRoute;
-// } 
+return newRoute;
+} 
 
 // //Visualize the Shortest Path on a subway style Route Map
 // function drawStraightRoute(){
@@ -178,94 +178,94 @@
 
 // }
 
-// function nodeClicked(place)
-// {   
-//     d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
+function nodeClicked(place)
+{   
+    d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
 
-//     from = to;
-//     to = place;
+    from = to;
+    to = place;
 
-//     if (from != "") {
-//       shortRoute = shortestRoute(from,to);
-//       updateMap();
-//       drawStraightRoute();
-//     }
+    if (from != "") {
+      shortRoute = shortestRoute(from,to);
+      updateMap();
+      drawStraightRoute();
+    }
     
-// }
+}
 
-// function updateMap()
-// {
-//     //reset our highlighted styles
-//     d3.selectAll(".mapLinkActive").attr("class","mapLink");
-//     d3.selectAll(".mapNodeActive").attr("class","mapNode");
+function updateMap()
+{
+    //reset our highlighted styles
+    d3.selectAll(".mapLinkActive").attr("class","mapLink");
+    d3.selectAll(".mapNodeActive").attr("class","mapNode");
 
-//     var lastPlace = "";
-//     forEach(shortRoute.places, function(place){
-//         d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
-//         //Try both directions to find link
-//         d3.select("#" + removeWhiteSpace(place) + "-" + removeWhiteSpace(lastPlace)).attr("class","mapLinkActive");
-//         d3.select("#" + removeWhiteSpace(lastPlace) + "-" + removeWhiteSpace(place)).attr("class","mapLinkActive");
-//         lastPlace = place;
-//     });
-// }
+    var lastPlace = "";
+    forEach(shortRoute.places, function(place){
+        d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
+        //Try both directions to find link
+        d3.select("#" + removeWhiteSpace(place) + "-" + removeWhiteSpace(lastPlace)).attr("class","mapLinkActive");
+        d3.select("#" + removeWhiteSpace(lastPlace) + "-" + removeWhiteSpace(place)).attr("class","mapLinkActive");
+        lastPlace = place;
+    });
+}
 
-// function drawMap()
-// {
-//     var svg = d3.select("#mapContainer").append("svg")
-//     .attr("width", mapWidth)
-//     .attr("height", mapHeight);
+function drawMap()
+{
+    var svg = d3.select("#mapContainer").append("svg")
+    .attr("width", mapWidth)
+    .attr("height", mapHeight);
 
-//     var outline = d3.select("#mapContainer").select("svg")
-//     .append("polyline")
-//     .attr("points",mapOutline)
-//     .attr("class","mapOutline");
+    var outline = d3.select("#mapContainer").select("svg")
+    .append("polyline")
+    .attr("points",mapOutline)
+    .attr("class","mapOutline");
     
-//     var nodes = d3.select("#mapContainer").select("svg").selectAll("mapNode")
-//     .attr("class", "mapNode").data(mapLocations);
+    var nodes = d3.select("#mapContainer").select("svg").selectAll("mapNode")
+    .attr("class", "mapNode").data(mapLocations);
 
-//     var links = d3.select("#mapContainer").select("svg").selectAll("mapLinks")
-//     .attr("class", "mapLinks").data(mapRoads);
+    var links = d3.select("#mapContainer").select("svg").selectAll("mapLinks")
+    .attr("class", "mapLinks").data(mapRoads);
 
-//     var labels = d3.select("#mapContainer").select("svg").selectAll("mapLabels")
-//     .attr("class", "mapLabels").data(mapLocations);
+    var labels = d3.select("#mapContainer").select("svg").selectAll("mapLabels")
+    .attr("class", "mapLabels").data(mapLocations);
 
-//     links.enter().append("line")
-//     .attr("class","mapLink")
-//     .attr("id",function(d){ return removeWhiteSpace(d.source.id) + "-" + removeWhiteSpace(d.target.id);})
-//     .attr("x1",function(d){ return d.source.x;})
-//     .attr("y1",function(d){ return d.source.y;})
-//     .attr("x2",function(d){ return d.target.x;})
-//     .attr("y2",function(d){ return d.target.y;});
+    links.enter().append("line")
+    	.attr("class","mapLink")
+    	.attr("id",function(d){ return removeWhiteSpace(d.source.id) + "-" + removeWhiteSpace(d.target.id);})
+    	.attr("x1",function(d){ return d.source.x;})
+    	.attr("y1",function(d){ return d.source.y;})
+    	.attr("x2",function(d){ return d.target.x;})
+    	.attr("y2",function(d){ return d.target.y;});
 
-//     nodes.enter().append("circle")
-//     .attr("class","mapNode")
-//     .attr("id",function(d){ return removeWhiteSpace(d.id);})
-//     .attr("cx",function(d){ return d.x;})
-//     .attr("cy",function(d){ return d.y;})
-//     .attr("r", nodeSize)
-//     .on("click", function(d) { nodeClicked(d.id); });
+    nodes.enter().append("circle")
+    	.attr("class","mapNode")
+    	.attr("id",function(d){ return removeWhiteSpace(d.id);})
+    	.attr("cx",function(d){ return d.x;})
+    	.attr("cy",function(d){ return d.y;})
+    	.attr("r", nodeSize)
+    	.on("click", function(d) { nodeClicked(d.id); });
 
-//     labels.enter().append("text")
-//     .attr("class","mapLabels")
-//     .text(function(d){ return d.id;})
-//     .style("fill","white")
-//     .style("text-anchor", function(d){
-//         if(d.x < 100) return "start"; // Hack to prevent label clipping
-//         if(d.x > 400) return "end"; // Hack to prevent label clipping
-//         else return "middle";
-//     })
-//     .attr("transform", function(d){ 
-//       if(d.id == "Hanakee Pearl Lodge") return "translate(" + d.x + ", " + (d.y - 10) + ")"; // Hack to prevent label overlap
-//       return "translate(" + d.x + ", " + (d.y + 14) + ")";});
+    labels.enter().append("text")
+    .attr("class","mapLabels")
+    .text(function(d){ return d.id;})
+    .style("fill","white")
+    .style("text-anchor", function(d){
+        if(d.x < 100) return "start"; // Hack to prevent label clipping
+        if(d.x > 400) return "end"; // Hack to prevent label clipping
+        else return "middle";
+    })
+    .attr("transform", function(d){ 
+      if(d.id == "Hanakee Pearl Lodge") return "translate(" + d.x + ", " + (d.y - 10) + ")"; // Hack to prevent label overlap
+      return "translate(" + d.x + ", " + (d.y + 14) + ")";});
     
-//     outline.exit().remove();
-//     links.exit().remove();
-//     nodes.exit().remove();
-// }
+    outline.exit().remove();
+    links.exit().remove();
+    nodes.exit().remove();
+}
 
-// function removeWhiteSpace(str)
-// {
-//   return str.replace(/\s/g, '');
-// }
+function removeWhiteSpace(str)
+{
+  return str.replace(/\s/g, '');
+}
 
-// drawMap();
+drawMap();

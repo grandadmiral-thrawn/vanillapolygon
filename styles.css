@@ -129,9 +129,9 @@ body {
 }
 
 .mapNode {
-	fill: #666666;
+	fill: ##f0e150;
   stroke: #ffffff;
-	stroke-width: .5px;
+	stroke-width: 2px;
 }
 
 .mapLinkActive {
@@ -141,9 +141,9 @@ body {
 }
 
 .mapNodeActive {
-	fill:#c13030;
-	stroke:#ffffff;
-	stroke-width:.5px;
+	fill: red;
+	stroke: salmon;
+	stroke-width: 10px;
 }
 
 .mapLabels {

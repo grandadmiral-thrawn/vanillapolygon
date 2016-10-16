@@ -120,7 +120,7 @@
 	var listenDoors = function(evt) {
 		// doors are added as salmon nodes
 		if (state.length >= 1){
-			circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon")
+			circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon","mapNode")
 	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov[areaHov.length-1]});
 		}
 	}
@@ -128,7 +128,7 @@
 	var listenWaypoints = function(evt) {
 		// waypoints are added as yellow nodes
 		if (state.length >= 1) {
-			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150")
+			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150", "mapNode")
 	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
 		}
 	}
@@ -139,7 +139,7 @@
 		for (var i = 0; i < obs.children.length; ++ i) {
 			var obscoords = parsePath(obstacles.children[i]);
 			for (var ii = 0; ii < obscoords.length; ++ ii) {
-				circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red");
+				circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red", "mapNode");
 				waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area:areaHov[areaHov.length-1]})
 			}			
 		}
@@ -187,7 +187,7 @@
 		// if there is some state already in the bank
 		if (state.length >=1){
 			// create a marker for the most recently drawn circle
-			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "30", "#a8a8a8");
+			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "30", "#a8a8a8", "mapNode");
 			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
 			var w = document.getElementById("waypoints").lastElementChild;
 			w.setAttributeNS(null, "class", "removable");
@@ -196,6 +196,7 @@
 	}
 
 	var listenDemo = function(evt) {
+		console.log(evt.target)
 		// clear out all the things, and do the area helper set up again. 
 		// state = [];
 		// waypoints = [];
@@ -279,11 +280,14 @@
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
-		svg.addEventListener('click', listenDemo);
+		randomPointFiller(waypoints);
+		mainAreaFiller(waypoints);
+		mainAreaDelauneyDemo(waypoints);
+		pl(waypoints);
+		//svg.addEventListener('click', listenDemo);
 		currentEventListener.push(listenDemo);
 		d3.selectAll(".active").attr("class", "passive");
 		demoButton.setAttribute('class', 'active');
-		
 	})
 
 	// generate voronoi waypoints for the main outline or a selected area
