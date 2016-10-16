@@ -90,6 +90,13 @@ body {
   fill: #fff;
 }
 
+.hidden-centroid {
+  visibility: hidden;
+}
+
+.visible-centroid {
+  visibility: visible;
+}
 
 #routeContainer {
 	text-align: center;

@@ -25,13 +25,15 @@ function partial(func) {
 var Break = {toString: function() {return "Break";}};
 
 var forEach = function(array, action) {
+  console.log(array)
   try {
     for (var i = 0; i < array.length; i++)
       action(array[i]);
   }
   catch (exception) {
     if (exception != Break)
-      throw exception;
+      //throw exception;
+    return
   }
 }
 

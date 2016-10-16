@@ -1,31 +1,78 @@
-// // empty variable to hold waypoints
+// needed by mapping library
 var roads = {};
+var mapRoads = [];
+var placeKeys = [];
+var shortRoute = {};
+var to = "",
+    from = "";
 
-var pl = function() {
+var placeKeysCB = function(err, roads, mapLocations, placeKeys, mapRoads) {
+  if(err) {
+    console.log(err)
+  }
+  for(var temp in roads) {
+    placeKeys.push(temp);
+  }
+  // Get our Links between Nodes/Places
+  // Nodes, and PlaceKeys are in the same order, so we can lookup via the index and for our purposes assume they are 1:1
+  forEach(mapLocations, function(place){
+
+      forEach(roads[place.x.toFixed(0) + "," + place.y.toFixed(0)], function(road) {
+        
+        mapRoads.push({source: place, target: mapLocations[placeKeys.indexOf(road.to)], dist: road.distance});
+      });
+  });
+  console.log(mapRoads)
+}
+
+var getMapLocations = function(err, waypoints, roads, placeKeys, mapRoads) {
+  if (err) {
+    console.log(err)
+  }
+  console.log(waypoints)
+  var mapLocations = [];
+
+  // do not define open locations as actual locations
+  for (var i = 0 ; i < waypoints.length ; ++ i) {
+    if (waypoints[i].area !== "open") {
+      var id = waypoints[i].area + "_" + waypoints[i].type +"-"+ waypoints[i].x + "-" + waypoints[i].y;
+      var obj = {x: waypoints[i].x, y: waypoints[i].y, id: id}
+      //console.log(obj)
+      mapLocations.push(obj)
+    } 
+  }
+  placeKeysCB(null, roads, mapLocations, placeKeys, mapRoads);
+}
+
+var pl = function(waypoints) {
+  
   // turns voronoi links between Nodes into actual paths with known lengths
   var outputpaths = []
-
   var d = document.getElementById("voronoi");
+  var test = document.getElementById("delaunay");
 
   for (var i = 0; i < d.children.length; ++i){
       if (d.children[i].getAttributeNS(null,"class") !== "ignore"){
-
+        // create a path 
         var newpath = "M " + d.children[i].getAttributeNS(null, "x1") + " " + d.children[i].getAttributeNS(null, "y1") + " L " + d.children[i].getAttributeNS(null, "x2") + " " + d.children[i].getAttributeNS(null, "y2");
 
+        // assign an id to that path based on its endpoints
         var newid = "connects-" + d.children[i].getAttributeNS(null, "x1") + "-" + d.children[i].getAttributeNS(null, "y1") + "-to-" + d.children[i].getAttributeNS(null, "x2") + "-" + d.children[i].getAttributeNS(null, "y2");
         d.children[i].setAttributeNS(null, "id", newid);
 
+        // measure the path as path element
         var blankpath = document.createElementNS("http://www.w3.org/2000/svg","path");
         blankpath.setAttributeNS(null,"d", newpath);
+
         //push to array maybe for front end
         outputpaths.push({name: newid, length: Number(blankpath.getTotalLength().toFixed(0))});
         // internal processing
 
-        console.log(d.children[i].getAttributeNS(null, "x1") +"," +d.children[i].getAttributeNS(null, "y1"))
         makeRoad(d.children[i].getAttributeNS(null, "x1") +"," +d.children[i].getAttributeNS(null, "y1"), d.children[i].getAttributeNS(null, "x2") +"," +d.children[i].getAttributeNS(null, "y2"), Number(blankpath.getTotalLength().toFixed(0)) )
       }
   }
-  return outputpaths
+
+  getMapLocations(null, waypoints, roads, placeKeys, mapRoads)
 }
 
 // functionally create a road from a point to another point
@@ -40,7 +87,6 @@ function makeRoad(from, to, length)
     }
   addRoad(from, to);
   addRoad(to, from);
-  console.log(roads)
 }
 
 function makeRoads(start)

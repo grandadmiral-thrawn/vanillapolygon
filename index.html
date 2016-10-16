@@ -24,7 +24,7 @@
 	<svg width="1000" height="1000" viewBox="0 0 4799 4799" preserveAspectRatio="xMidYMax meet" id="svg-floorplan">
 		<g id="map-outline">
 			<!-- In the SVG from the back end this is the one with the path.getTotalLength is the longest.-->
-			<path id="main-outline" class="areas" d="M 561.33 3473.05 L 1878.63 3473.05 L 1878.63 3340.0 L 2522.9 3340.0 L 2522.9 3473.05 L 3818 3473.05 L 3818 2909 L 4537 2909 L 4537 319 L 1878.63 319 L 1878.63 1271.42 L 2521 1271.42 L 2521 2568 L 1878.63 2568 L 1878.63 2191 L 561.33 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
+			<path id="main-outline" class="areas" d="M 561 3473 L 1878 3473 L 1878 3340 L 2521 3340 L 2521 3473 L 3818 3473 L 3818 2909 L 4537 2909 L 4537 319 L 1878 319 L 1878 1271.42 L 2521 1271 L 2521 2568 L 1878 2568 L 1878 2191 L 561 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
 		</g>
 		<g id="areas">
 			<g class="wrapper">
@@ -43,7 +43,7 @@
 				<path id="area-5" class="areas" d="M 2920 3002 L 3300 3002 L 3300 3473 L 2920 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-6" class="areas" d="M 3300 3002 L 3800 3002 L 3800 3473 L 3300 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-6" class="areas" d="M 3300 3002 L 3818 3002 L 3818 3473 L 3300 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
 				<path id="area-7" class="areas" d="M 1868 322 L 1868 1277 L 2521 1277 L 2521 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
@@ -83,6 +83,8 @@
 	// coordinates of the area being drawn. Upon "close", this empties
 	var coords = [];
 
+
+
 	// what function are we currently "doing" - removes the event listener of the functions we are NOT currently doing
 	var currentEventListener = [];
 	// turns on the adding points to waypoints list as doors
@@ -97,7 +99,7 @@
 	var voronoiButton = document.getElementById("voronoi-button");
 	// generates triangulation per area
 	var delaunayButton = document.getElementById("delaunay-button");
-	// clears stuff for a demonstration, fill in with new stuff
+	// do the way finding
 	var demoButton = document.getElementById("demo-button");
 	// identifies the corners of obstacles as necessary "waypoints"
 	var obstacleButton = document.getElementById("obstacle-button");
@@ -200,18 +202,20 @@
 		// polys = [];
 		// coords = [];
 		// areaHelper(polys, waypoints, areaHov)
-		var bob = pl()
-		var roads = {};
-		for (var i = 0; i < bob.length; ++i) {
-			var loc = bob[i].name.split("-");
-			var fl = {x: loc[1], y:loc[2]}
-			var tl = {x: loc[4], y: loc[5]}
-			var dist = bob.length;
-			makeRoad(fl, tl, dist)
-		}
-		console.log(bob)
-		var ml1 = getMapLocations(waypoints);
-		console.log(ml1)
+		// var mapLocations = pl(waypoints, roads)
+		// for (var i = 0; i < bob.length; ++i) {
+		// 	var loc = bob[i].name.split("-");
+		// 	var fl = {x: loc[1], y:loc[2]}
+		// 	var tl = {x: loc[4], y: loc[5]}
+		// 	var dist = bob.length;
+		// 	makeRoad(fl, tl, dist)
+		// }
+		// console.log(mapLocations);
+		// set the centroid of the main area into the mix
+		randomPointFiller(waypoints);
+		mainAreaFiller(waypoints);
+		mainAreaDelauneyDemo(waypoints);
+		pl(waypoints)
 	}
 	
 	// put the existing areas reference and add hover text effect to see area and walkability 
