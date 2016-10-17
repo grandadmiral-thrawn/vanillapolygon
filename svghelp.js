@@ -122,7 +122,6 @@ var circleFactory = function(appendTo, x, y, r, fillcolor, givenClass) {
 	circle.addEventListener("click", function(e) {
 		if (e.shiftKey) {
 			e.preventDefault();
-			console.log("shift key")
 			circle.setAttributeNS(null, "class", "ignore");
 		}
 	})
@@ -146,27 +145,125 @@ var waypointFilter = function(xin, yin, type, areaHov, waypoints) {
 	}
 	return x;
 }
-var voronoiHelper = function(waypoints, aH) {
+
+var latticegen = function(pathelement, waypoints){
+	// generate a basic lattice for the wayfinding
+	var bbox = pathelement.getBBox();
+	var p = parsePath(pathelement);
+	var polygon = p.map(function(x){return [x[0][0], x[0][1]]});
+	var cent = d3.polygonCentroid(polygon);
+	var rad = 40;
+
+	// big enough for r=50 nodes
+	var n = Math.ceil(bbox.width/150)
+	var xscale = d3.scaleLinear().domain([0,n]).range([bbox.x+0.1*bbox.width, bbox.x + bbox.width])
+	var yscale = d3.scaleLinear().domain([0,n]).range([bbox.y+0.1*bbox.height, bbox.y+bbox.height])
+	
+	// get the generated points div and add the points as long as they don't over lay the centroid already there.
+	var gen = document.getElementById("generated");
+
+	for (var i = 0; i < n; ++i){
+		for (var j = 0; j < n; ++j) {
+			var point = [xscale(i), yscale(j)]
+			// here I am trying to not overly the centroid
+			var iscentroid = intersection(point[0], point[1], 30, cent[0], cent[1], 40);
+			var contains = d3.polygonContains(polygon, point)
+
+			if (contains === true && iscentroid === false) {
+				var c = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+				c.setAttributeNS(null, "cx", point[0].toFixed(0))
+				c.setAttributeNS(null, "cy", point[1].toFixed(1))
+				c.setAttributeNS(null, "r", "10");
+				c.setAttributeNS(null, "fill", "black");
+				c.setAttributeNS(null, "class", "mapNode");
+				c.setAttributeNS(null, "stroke", "white");
+				c.setAttributeNS(null, "stroke-width", 2);
+				c.setAttributeNS(null, "id", point[0].toFixed(0)+","+point[1].toFixed(1))
+				gen.appendChild(c)
+				waypoints.push({x: point[0], y: point[1], area: pathelement.getAttributeNS(null,"id"), type: "lattice"})
+			}
+		}
+	}
+}
+
+
+var intersection = function(x0, y0, r0, x1, y1, r1) {
+	//http://stackoverflow.com/questions/12219802/a-javascript-function-that-returns-the-x-y-points-of-intersection-between-two-ci/12221389#12221389
+    var a, dx, dy, d, h, rx, ry;
+    var x2, y2;
+
+    /* dx and dy are the vertical and horizontal distances between
+     * the circle centers.
+     */
+    dx = x1 - x0;
+    dy = y1 - y0;
+
+    /* Determine the straight-line distance between the centers. */
+    d = Math.sqrt((dy*dy) + (dx*dx));
+
+    /* Check for solvability. */
+    if (d > (r0 + r1)) {
+        /* no solution. circles do not intersect. */
+        return false;
+    }
+    if (d < Math.abs(r0 - r1)) {
+        /* no solution. one circle is contained in the other */
+        return false;
+    }
+
+    /* 'point 2' is the point where the line through the circle
+     * intersection points crosses the line between the circle
+     * centers.  
+     */
+
+    /* Determine the distance from point 0 to point 2. */
+    a = ((r0*r0) - (r1*r1) + (d*d)) / (2.0 * d) ;
+
+    /* Determine the coordinates of point 2. */
+    x2 = x0 + (dx * a/d);
+    y2 = y0 + (dy * a/d);
+
+    /* Determine the distance from point 2 to either of the
+     * intersection points.
+     */
+    h = Math.sqrt((r0*r0) - (a*a));
+
+    /* Now determine the offsets of the intersection points from
+     * point 2.
+     */
+    rx = -dy * (h/d);
+    ry = dx * (h/d);
+
+    /* Determine the absolute intersection points. */
+    var xi = x2 + rx;
+    var xi_prime = x2 - rx;
+    var yi = y2 + ry;
+    var yi_prime = y2 - ry;
+
+    return [xi, xi_prime, yi, yi_prime];
+}
+
+var voronoiHelper = function(waypoints, areaHov) {
+	// voronoi polygon for one area
+	var ah = areaHov[areaHov.length-1]
 	//Make a voronoi object
 	var voronoi = d3.voronoi();
-	centroidMaker(waypoints, aH)
+	// put in the centroid
+	centroidMaker(waypoints, areaHov)
 
 	// all who are in that areas
-	var s = waypoints.filter(function(x){if (x.area === aH){ return x}});
-	// all the doors, even those not in that area
-	//var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
-	//var s = sa.concat(sd);
+	var s = waypoints.filter(function(x){if (x.area === ah){ return x}});
 	var s2 = s.map(function(d) {return [d.x, d.y]});
 
 	function drawCells(centroids) {
-		console.log(centroids)
   		centroids
       	.attr("d", function(d) { console.log(d); if (d[0]==null){return null} else {return d == null ? null : "M " + d.join(" L" ) + "Z"; }})
       	.attr("class", "mapLinks")
       	.style("fill","none")
       	.attr("stroke","yellow")
+      	.attr("stroke-dasharray","5,5")
       	.attr("stroke-width","2")
-		}
+	}
 
 	var centroids= d3.selectAll("#centroids")
 		.selectAll(".centroids")
@@ -210,23 +307,23 @@ var parsePath = function(element) {
 }
 
 var centroidMaker = function(waypoints, areaHov) {
-	// puts a centroid point in the room if there's not a specific point already defined
-	var s = waypoints.filter(function(x){if ((x.type === "poi") && (x.area === areaHov)){return x}});
-	
-	if (s.length === 0) {
-		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area === areaHov)){return x}});
-		var sd = waypoints.filter(function(x){if ((x.type === "corners") && (x.area === areaHov)){return x}});
-		var s = sd.concat(so);
+
+	// create a centroid and some surrounding points for areas taht are walkable	
+	var v = document.getElementById(areaHov[areaHov.length-1]);
+	var s = parsePath(v);
 		
-		var polygon = s.map(function(x){return [x.x, x.y]})
+	var polygon = s.map(function(x){return [x[0][0], x[0][1]]})
+	var centroid = d3.polygonCentroid(polygon);
+	
+	var ct = document.getElementById("generated");
+	circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue", "mapNode");
 
-		var centroid = d3.polygonCentroid(polygon);
-
-		var ct = document.getElementById("generated");
-		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue", "mapNode");
-		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: areaHov})
-	}
+	// create a lattice to represent other possible points in that region
+	latticegen(v, waypoints);
+	// add centroid to waypoints
+	waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: areaHov[areaHov.length-1]})
 }
+
 
 
 var delaunayHelper = function(waypoints, areaHov) {
@@ -234,7 +331,6 @@ var delaunayHelper = function(waypoints, areaHov) {
 	function redrawTriangle(triangle) {
   	triangle
       .attr("d", function(d) { 
-      	console.log(d)
       	return "M" + d.join("L") + "Z"; 
       })
       .attr("class", "mapLinks")
@@ -266,31 +362,31 @@ var delaunayHelper = function(waypoints, areaHov) {
 
 	//Make a voronoi object
 	var voronoi = d3.voronoi();
-	
-	// all who are in that area -- when the area is opened up in demo this is "open"
-	var sa = waypoints.filter(function(x){if (x.area === areaHov){ return x}});
+	var aselected = document.getElementById(areaHov[areaHov.length-1]);
 
+	latticegen(aselected, waypoints);
+
+	// all who are in that area -- when the area is opened up in demo this is "open"
+	var sa = waypoints.filter(function(x){if (x.area === areaHov[areaHov.length-1]){ return x}});
+	
 	// all the doors, even those not in that area
-	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
+	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
 	var s = sa.concat(sd);
 	
-	if (areaHov === "area-1") {
+	if (areaHov[areaHov.length-1] === "area-1") {
 		// just keep the obstacle out
 		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area ==="temp")){return x}});
 		var s = s.concat(so);
 	}
 
-	if (areaHov === "open") {
+	if (areaHov[areaHov.length-1] === "open") {
 		var s = waypoints.filter(function(x) {
-			console.log(x)
 			if ((x.type !== "corners") && (x.area ==="open")){
 				return x}
 		});
-	//var s = s.concat(so);
 	}
 
 	var s2 = s.map(function(d) {return [d.x, d.y]});
-
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
 		.selectAll(".triangles")
@@ -307,6 +403,63 @@ var delaunayHelper = function(waypoints, areaHov) {
 		.call(redrawLink);
 	}
 
+var delaunayLimited = function(waypoints, areaHov) {
+
+	// draws delaunay Triangles - in this case for a more limited set of points
+	function redrawTriangle(triangle) {
+  	triangle
+      .attr("d", function(d) { 
+      	return "M" + d.join("L") + "Z"; 
+      })
+      .attr("class", "mapLinks")
+	}
+
+	function redraw() {
+  		var diagram = voronoi(s2);
+  		triangle = triangle.data(diagram.triangles()), triangle.exit().remove();
+  		triangle = triangle.enter().append("path").merge(triangle).call(redrawTriangle);
+  		link = link.data(diagram.links()), link.exit().remove();
+  		link = link.enter().append("line").merge(link).call(redrawLink);
+  		site = site.data(s2).call(redrawSite);
+	}
+
+	function redrawLink(link) {
+  	link
+      .attr("x1", function(d) { return d.source[0]; })
+      .attr("y1", function(d) { return d.source[1]; })
+      .attr("x2", function(d) { return d.target[0]; })
+      .attr("y2", function(d) { return d.target[1]; })
+      .attr("class", "mapLinks")
+	}
+	
+	function redrawSite(site) {
+  	site
+      .attr("cx", function(d) { return d[0]; })
+      .attr("cy", function(d) { return d[1]; })
+	}
+	var voronoi = d3.voronoi();
+	var aselected = document.getElementById(areaHov[areaHov.length-1]);
+	// all who are in that area -- when the area is opened up in demo this is "open"
+	var sa = waypoints.filter(function(x){if (x.area === areaHov[areaHov.length-1]){ return x}});
+	// all the doors, even those not in that area
+	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
+	var s = sa.concat(sd);
+	
+	if (areaHov[areaHov.length-1] === "area-1") {
+		// just keep the obstacle out
+		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area ==="temp")){return x}});
+		var s = s.concat(so);
+	}
+
+	if (areaHov[areaHov.length-1] === "open") {
+		var s = waypoints.filter(function(x) {
+			if ((x.type !== "corners") && (x.area ==="open")){
+				return x
+			}
+		});
+	}
+	
+}
 
 var areaHelper = function(polys, waypoints, areaHov) {
 	// display converted values in array
@@ -325,9 +478,21 @@ var areaHelper = function(polys, waypoints, areaHov) {
 		var thisArea = polyArea(polygonIn);
 		var id = mo.getAttributeNS(null, "id");
 
+		var walkable = mo.classList.contains("walkable");
+
+		if (walkable === true) {
+			polys.push({'polygon': polygonIn, 'area': thisArea, 'id': id, 'walkable': 1});
+		} else {
+			polys.push({'polygon': polygonIn, 'area': thisArea, 'id': id, 'walkable': 0});
+		}
+
 		// determine the corners of that area and draw them
 		var corners = parsePath(mo);
 		var fc = "cornflowerblue";
+
+		var othercorners = document.getElementById("corners");
+		var occhildren = othercorners.children;
+		console.log(occhildren);
 
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc, "mapNode")
@@ -362,6 +527,13 @@ var areaHelper = function(polys, waypoints, areaHov) {
     	t.appendChild(ts2);
     	t.appendChild(ts3);
     	mo.parentNode.appendChild(t);
+
+    	// if you're not over a subclass you're over a main class
+    	mo.addEventListener("mouseover", function(evt) {
+    		evt.stopPropagation();
+			//evt.target.parentNode.children[1].setAttributeNS(null, "class", "hidden-details");
+			areaHov.push("open");
+		});
     }
 
 	// get existing areas and add to polys list
@@ -433,7 +605,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 			});
 		}
 	}
-	mainOutlineHelper(null, polys)
+	mainOutlineHelper(null, polys);
 }
 
 var simplePolygonHelper = function(path, polys) {

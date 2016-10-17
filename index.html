@@ -21,7 +21,7 @@
     <div class="passive" id="demo-button"> DEMO </div>
 </nav>
 <div id="container">
-<div id="descriptive-text"></div>
+<div id="descriptive-text"> This demonstration shows various features (i.e. doors, points of interest, obstacle identification, etc. that can be labelled with a simplified SVG editor. The Voronoi and Delauney tabs show how walk lines can be automatically generated either for known waypoints, for a lattice in a designated "walkable" area, or can be completely left out. Unique behaviors around doors (connect areas) and obstacles (no waypoints within) create realistic paths. All features in this client-side implementation can be removed in order of insertion by shift + click. Sessions in the database could serve the same function.</div>
 <div id="mapContainer">
 	<svg width="1000" height="1000" viewBox="0 0 4799 4799" preserveAspectRatio="xMidYMax meet" id="svg-floorplan">
 		<g id="map-outline">
@@ -198,18 +198,54 @@
 	}
 
 	var listenVoronoi = function(evt) {
-		if (waypoints.length >= 1) {
-			voronoiHelper(waypoints, areaHov);
+		document.getElementById("descriptive-text").textContent = "Click on an area to generate the Voronoi polygons for that area. Walkable areas are filled with a lattice of temporary points. A search for any location within that grid area will be met with a response for the temporary point defining it by this Voronoi diagram. To remove a Voronoi diagram, shift + click on the area. "
+
+		if (!evt.shiftKey) {
+			if (waypoints.length >= 1) {
+				voronoiHelper(waypoints, areaHov);
+			} 
+		} else {
+			d3.selectAll(".mapLink").remove()
+			d3.selectAll(".centroids").remove()
+
+			var badpoint = waypoints.filter(function(x){ if ((x.type === "lattice") && (x.area = areaHov[areaHov.length-1])){x.type='ignore';}})
+
+			var badpoint = waypoints.filter(function(x){ if ((x.type === "centroid") && (x.area = areaHov[areaHov.length-1])){x.type='ignore';}})
+
+			// note this kills ALL the generated nodes, need to be area specific
+			d3.select("#generated").selectAll("circle").remove()
 		}
+		
 	}
 
 	var listenDelaunay = function(evt) {
-		if (waypoints.length >= 1) {
-			var areaHov = evt.target.getAttributeNS(null, "id");
-			var cssget = document.getElementById(areaHov);
-			var walkable = cssget.classList.contains("walkable");
-			// when operating only on one room, we constrain to that room, except the door node
-			delaunayHelper(waypoints, areaHov);
+
+		document.getElementById("descriptive-text").textContent = "Click on an area to create a Delaunay triangulation for that area. If the area contains POI, the Delauney triangulation will show the triangulation for the POI. If it does not contain POI, the Delauney triangulation will show the lattice generated via the Voronoi polygons."
+
+		if (!evt.shiftKey){
+			if (waypoints.length >= 1) {
+				if (areaHov[areaHov.length-1] === "open") {
+					var cssget = document.getElementById("main-outline");
+				} else {
+					var cssget = document.getElementById(areaHov[areaHov.length-1]);
+				}
+				
+				var walkable = cssget.classList.contains("walkable");
+				// when operating only on one room, we constrain to that room, except the door node
+				if (walkable === true){
+					delaunayHelper(waypoints, areaHov);
+				} else {
+					var haspoi = waypoints.filter(function(x){if ((x.type==='poi') && (x.area === areaHov[areaHov.length-1])) {
+						return x;
+					}})
+					if (haspoi.length >= 1){
+						delaunayLimited(waypoints, areaHov)
+					} else {
+						console.log("area is not walkable")
+					}
+					
+				}
+			}
 		}
 	}
 

@@ -158,6 +158,11 @@ body {
 	stroke-width: 1px;
 }
 
+.mapLinks {
+  stroke:#ffffff;
+  stroke-width: 1px;
+}
+
 .mapNode {
 	fill: ##f0e150;
   stroke: #ffffff;
