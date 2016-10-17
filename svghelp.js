@@ -67,7 +67,7 @@ var mainAreaDelauneyDemo = function(waypoints) {
       		return d == null ? null : "M " + d.join(" L" ) + "Z"; 
       	}
       	})
-      	.attr("class", "mapLinks")
+      	.attr("class", "mapLink")
       	.style("fill","none")
       	.attr("stroke","cyan")
       	.attr("stroke-width","2")
@@ -156,8 +156,8 @@ var latticegen = function(pathelement, waypoints){
 
 	// big enough for r=50 nodes
 	var n = Math.ceil(bbox.width/150)
-	var xscale = d3.scaleLinear().domain([0,n]).range([bbox.x+0.1*bbox.width, bbox.x + bbox.width])
-	var yscale = d3.scaleLinear().domain([0,n]).range([bbox.y+0.1*bbox.height, bbox.y+bbox.height])
+	var xscale = d3.scaleLinear().domain([0,n]).range([bbox.x+0.1*bbox.width,  bbox.x + bbox.width +0.1*bbox.width])
+	var yscale = d3.scaleLinear().domain([0,n]).range([bbox.y+0.1*bbox.height, bbox.y + bbox.height +0.1*bbox.height])
 	
 	// get the generated points div and add the points as long as they don't over lay the centroid already there.
 	var gen = document.getElementById("generated");
@@ -258,7 +258,7 @@ var voronoiHelper = function(waypoints, areaHov) {
 	function drawCells(centroids) {
   		centroids
       	.attr("d", function(d) { console.log(d); if (d[0]==null){return null} else {return d == null ? null : "M " + d.join(" L" ) + "Z"; }})
-      	.attr("class", "mapLinks")
+      	.attr("class", "mapLink")
       	.style("fill","none")
       	.attr("stroke","yellow")
       	.attr("stroke-dasharray","5,5")
@@ -333,7 +333,7 @@ var delaunayHelper = function(waypoints, areaHov) {
       .attr("d", function(d) { 
       	return "M" + d.join("L") + "Z"; 
       })
-      .attr("class", "mapLinks")
+      .attr("class", "mapLink")
 	}
 
 	function redraw() {
@@ -351,7 +351,7 @@ var delaunayHelper = function(waypoints, areaHov) {
       .attr("y1", function(d) { return d.source[1]; })
       .attr("x2", function(d) { return d.target[0]; })
       .attr("y2", function(d) { return d.target[1]; })
-      .attr("class", "mapLinks")
+      .attr("class", "mapLink")
 	}
 	
 	function redrawSite(site) {
@@ -411,7 +411,7 @@ var delaunayLimited = function(waypoints, areaHov) {
       .attr("d", function(d) { 
       	return "M" + d.join("L") + "Z"; 
       })
-      .attr("class", "mapLinks")
+      .attr("class", "mapTriangle")
 	}
 
 	function redraw() {
@@ -429,7 +429,7 @@ var delaunayLimited = function(waypoints, areaHov) {
       .attr("y1", function(d) { return d.source[1]; })
       .attr("x2", function(d) { return d.target[0]; })
       .attr("y2", function(d) { return d.target[1]; })
-      .attr("class", "mapLinks")
+      .attr("class", "mapLink")
 	}
 	
 	function redrawSite(site) {
@@ -439,10 +439,14 @@ var delaunayLimited = function(waypoints, areaHov) {
 	}
 	var voronoi = d3.voronoi();
 	var aselected = document.getElementById(areaHov[areaHov.length-1]);
+
+	// var p = document.getElementById("main-outline");
+	// var pnodes = parsePath(p);
+
 	// all who are in that area -- when the area is opened up in demo this is "open"
-	var sa = waypoints.filter(function(x){if (x.area === areaHov[areaHov.length-1]){ return x}});
+	var sa = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && ((x.type==="poi") || (x.type==="door"))){ return x}});
 	// all the doors, even those not in that area
-	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
+	var sd = waypoints.filter(function(x){if (x.type === "door"){return x}});
 	var s = sa.concat(sd);
 	
 	if (areaHov[areaHov.length-1] === "area-1") {
@@ -451,13 +455,28 @@ var delaunayLimited = function(waypoints, areaHov) {
 		var s = s.concat(so);
 	}
 
-	if (areaHov[areaHov.length-1] === "open") {
-		var s = waypoints.filter(function(x) {
-			if ((x.type !== "corners") && (x.area ==="open")){
-				return x
-			}
-		});
-	}
+	// if (areaHov[areaHov.length-1] === "open") {
+	// 	var s = waypoints.filter(function(x) {
+	// 		if ((x.type !== "corners") && (x.area ==="open")){
+	// 			return x
+	// 		}
+	// 	});
+	// }
+	var s2 = s.map(function(d) {return [d.x, d.y]});	
+	var triangle = d3.selectAll("#delaunay")
+		.attr("class", "triangles")
+		.selectAll(".triangles")
+		.data(voronoi.triangles(s2))
+		.enter()
+		.append("path")
+		.call(redrawTriangle)
+
+	var link = d3.select("#voronoi")
+		.attr("class", "links")
+		.selectAll(".links")
+		.data(voronoi.links(s2))
+		.enter().append("line")
+		.call(redrawLink);
 	
 }
 

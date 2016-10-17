@@ -265,6 +265,7 @@
 					p0[i].setAttributeNS(null, "class", "areas");
 				}
 			}
+			
 			// create a wrapper group and a blank path to continue drawing. 
 			var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 			g.setAttributeNS(null, "class", "wrapper");
@@ -292,7 +293,25 @@
 	}
 
 	var listenDemo = function(evt) {
-		console.log(evt.target)
+		// add yourself as a white node
+		if (state.length >= 1){
+
+			// if the shiftkey is on, removes the door rather than adds a new one
+			if (!evt.shiftKey) {
+				circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "50", "white", "mapNode");
+
+				waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
+			}  
+
+			if(evt.shiftKey) {
+	   			var cx = evt.target.getAttributeNS(null, "cx");
+	   			var cy = evt.target.getAttributeNS(null, "cy");
+
+	   			var badpoint = waypoints.filter(function(x){ if ((String(x.x) == evt.target.getAttributeNS(null,"cx")) && (String(x.y) == evt.target.getAttributeNS(null,"cy"))){x.type='ignore'; console.log(x)}})
+	   		} 		
+		}
+		//var me = document.createElementNS("http://www.w3.org/2000/svg","circle");
+
 		// clear out all the things, and do the area helper set up again. 
 		// state = [];
 		// waypoints = [];
