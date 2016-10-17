@@ -1,8 +1,3 @@
-var waypointFactory = function(x, y, type, areaHov) {
-	// create a waypoint and give it a location,type, and area association
-	return {x: x, y: y, type: type, area: areaHov}
-}
-
 var randomPointFiller = function(waypoints) {
 	// puts at least a centroid in the main area
 	var areas = document.getElementById("areas");
@@ -43,13 +38,24 @@ var mainAreaFiller = function(waypoints) {
 }
 
 var mainAreaDelauneyDemo = function(waypoints) {
+
 	var areas = document.getElementById("areas");
 	var voronoi = d3.voronoi();
 	var pts = waypoints.map(function(x){return [x.x, x.y]})
-	
+
 	for (var i = 0; i < areas.children.length; ++i) {
-		var id = areas.children[i].children[0].getAttributeNS(null,"id");
-		delaunayHelper(waypoints, id);
+
+		var id = areas.children[i].children[0].getAttributeNS(null, "id");
+		console.log(id)
+		var cssget = document.getElementById(id);
+		var walkable = cssget.classList.contains("walkable");
+		if (walkable !== true) {
+			delaunayHelper(waypoints, id);
+		} else {
+			waypoints.map(function(x){if (x.area === id){
+				x.area = "open";
+			}});
+		}
 	}
 	delaunayHelper(waypoints,"open")
 
@@ -77,6 +83,14 @@ var mainAreaDelauneyDemo = function(waypoints) {
 		.enter()
 		.append("path")
 		.call(drawCells)
+
+	var vor = document.getElementById("voronoi");
+	var lines = vor.children;
+	for (var i = 0; i < lines.length; ++ i) {
+		lines[i].addEventListener("click", function(e){
+			if (e.shiftKey) console.log(e.target)}
+			, false);
+	}	
 }
 
 var cursorPoint = function (evt, pointel, svgel, svgstateel) {
@@ -101,12 +115,37 @@ var circleFactory = function(appendTo, x, y, r, fillcolor, givenClass) {
 	circle.setAttributeNS(null, "fill", fillcolor);
 	circle.setAttributeNS(null, "opacity", 1);
 	circle.setAttributeNS(null, "stroke", "black");
-	circle.setAttributeNS(null, "stroke-opacity", "1")
-	circle.setAttributeNS(null, "class", givenClass)
-	circle.setAttributeNS(null, "id", x + "," + y)
+	circle.setAttributeNS(null, "stroke-opacity", "1");
+	circle.setAttributeNS(null, "class", givenClass);
+	circle.setAttributeNS(null, "id", x + "," + y);
+
+	circle.addEventListener("click", function(e) {
+		if (e.shiftKey) {
+			e.preventDefault();
+			console.log("shift key")
+			circle.setAttributeNS(null, "class", "ignore");
+		}
+	})
 	appendTo.appendChild(circle)
 }
 
+var waypointFactory = function(x, y, type, areaHov) {
+	// create a waypoint and give it a location,type, and area association
+	return {x: x, y: y, type: type, area: areaHov}
+}
+
+var waypointFilter = function(xin, yin, type, areaHov, waypoints) {
+	if (waypoints.length === 0) {
+		return;
+	} else {
+		var similar2 = waypoints.filter(function(x){
+		if (((x.x + 25) <=xin || (x.x-25) >= xin) && ((x.y + 25) <=yin || (x.y-25) >=yin)) {
+			return x;
+			}
+		})
+	}
+	return x;
+}
 var voronoiHelper = function(waypoints, aH) {
 	//Make a voronoi object
 	var voronoi = d3.voronoi();
@@ -194,7 +233,10 @@ var delaunayHelper = function(waypoints, areaHov) {
 	// draws delaunay Triangles 
 	function redrawTriangle(triangle) {
   	triangle
-      .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+      .attr("d", function(d) { 
+      	console.log(d)
+      	return "M" + d.join("L") + "Z"; 
+      })
       .attr("class", "mapLinks")
 	}
 
@@ -225,22 +267,26 @@ var delaunayHelper = function(waypoints, areaHov) {
 	//Make a voronoi object
 	var voronoi = d3.voronoi();
 	
-	// all who are in that areas
+	// all who are in that area -- when the area is opened up in demo this is "open"
 	var sa = waypoints.filter(function(x){if (x.area === areaHov){ return x}});
+
 	// all the doors, even those not in that area
 	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov)){return x}});
-	//var sd = [];
-
 	var s = sa.concat(sd);
 	
 	if (areaHov === "area-1") {
+		// just keep the obstacle out
 		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area ==="temp")){return x}});
 		var s = s.concat(so);
 	}
 
 	if (areaHov === "open") {
-		var s = waypoints.filter(function(x){if ((x.type !== "corners") && (x.area ==="open")){return x}});
-		//var s = s.concat(so);
+		var s = waypoints.filter(function(x) {
+			console.log(x)
+			if ((x.type !== "corners") && (x.area ==="open")){
+				return x}
+		});
+	//var s = s.concat(so);
 	}
 
 	var s2 = s.map(function(d) {return [d.x, d.y]});
@@ -344,7 +390,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 			waypoints.push(waypoint)
 		}
 		
-		if (areas.children[i].children[0].getAttributeNS(null, "class") === "areas") {
+		if ((areas.children[i].children[0].getAttributeNS(null, "class") === "areas walkable") || (areas.children[i].children[0].getAttributeNS(null, "class") === "areas not-walkable")) {
 			
 			var polygonIn = polygonSampledFromPath(areas.children[i].children[0], 1000)
 			var thisArea = polyArea(polygonIn);

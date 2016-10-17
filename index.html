@@ -20,41 +20,45 @@
     <div class="passive" id="obstacle-button"> OBSTACLE </div>
     <div class="passive" id="demo-button"> DEMO </div>
 </nav>
+<div id="container">
+<div id="descriptive-text"></div>
 <div id="mapContainer">
 	<svg width="1000" height="1000" viewBox="0 0 4799 4799" preserveAspectRatio="xMidYMax meet" id="svg-floorplan">
 		<g id="map-outline">
 			<!-- In the SVG from the back end this is the one with the path.getTotalLength is the longest.-->
-			<path id="main-outline" class="areas" d="M 561 3473 L 1878 3473 L 1878 3340 L 2521 3340 L 2521 3473 L 3818 3473 L 3818 2909 L 4537 2909 L 4537 319 L 1878 319 L 1878 1271.42 L 2521 1271 L 2521 2568 L 1878 2568 L 1878 2191 L 561 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
+			<path id="main-outline" class="areas not-walkable" d="M 561 3473 L 1878 3473 L 1878 3340 L 2521 3340 L 2521 3473 L 3818 3473 L 3818 2909 L 4537 2909 L 4537 319 L 1878 319 L 1878 1271.42 L 2521 1271 L 2521 2568 L 1878 2568 L 1878 2191 L 561 2191 Z" fill="transparent" stroke="#a8a8a8" stroke-width="45" />
 		</g>
 		<g id="areas">
+		<!-- In the SVG from the back end these would be loaded up. We also want the option to add areas of our own. .-->
 			<g class="wrapper">
-				<path id="area-1" class="areas" d="M 561 2521 L 1878 2521 L 1878 3473 L 561 3473 Z" fill="salmon" stroke="#6d0e04" opacity="0.2" stroke-width="10" />
+				<path id="area-1" class="areas walkable" d="M 561 2521 L 1878 2521 L 1878 3473 L 561 3473 Z" fill="salmon" stroke="#6d0e04" opacity="0.2" stroke-width="10" />
 			</g>
 			<g class="wrapper">
-				<path id="area-2" class="areas" d="M 561 2191 L 1878 2191 L 1878 2521 L 561 2521 Z" fill="cornflowerblue" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
+				<path id="area-2" class="areas walkable" d="M 561 2191 L 1878 2191 L 1878 2521 L 561 2521 Z" fill="cornflowerblue" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-3" class="areas" d="M 1878 2568 L 2521 2568 L 2521 3340 L 1878 3340 Z" fill="#f0e150" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
+				<path id="area-3" class="areas walkable" d="M 1878 2568 L 2521 2568 L 2521 3340 L 1878 3340 Z" fill="#f0e150" stroke="#6d0e04" opacity="0.2" stroke-width="10"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-4" class="areas" d="M 2521 3002 L 2521 3473 L 2920 3473 L 2920 3002 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-4" class="areas walkable" d="M 2521 3002 L 2521 3473 L 2920 3473 L 2920 3002 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-5" class="areas" d="M 2920 3002 L 3300 3002 L 3300 3473 L 2920 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-5" class="areas walkable" d="M 2920 3002 L 3300 3002 L 3300 3473 L 2920 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-6" class="areas" d="M 3300 3002 L 3818 3002 L 3818 3473 L 3300 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-6" class="areas walkable" d="M 3300 3002 L 3818 3002 L 3818 3473 L 3300 3473 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-7" class="areas" d="M 1868 322 L 1868 1277 L 2521 1277 L 2521 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-7" class="areas walkable" d="M 1868 322 L 1868 1277 L 2521 1277 L 2521 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-8" class="areas" d="M 4230 1277 L 4538 1277 L 4538 322 L 4230 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-8" class="areas walkable" d="M 4230 1277 L 4538 1277 L 4538 322 L 4230 322 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 			<g class="wrapper">
-				<path id="area-9" class="areas" d="M 4230 1277 L 4538 1277 L 4538 1700 L 4230 1700 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
+				<path id="area-9" class="areas walkable" d="M 4230 1277 L 4538 1277 L 4538 1700 L 4230 1700 Z" fill="#1E8449" stroke="#1E8449" opacity="0.2" stroke-width="15"/>
 			</g>
 		</g>
+		<!-- Doors link two rooms together. Two door nodes associated with each other are a pair-->
 		<g id="doors"></g>
 		<g id="corners"></g>
 		<g id="centroids"></g>
@@ -69,6 +73,7 @@
 	</svg>
 </div>
 <div id="routeContainer"></div>
+</div>
 <script>
 	window.onload = function() {
 
@@ -82,8 +87,6 @@
 	var polys = [];
 	// coordinates of the area being drawn. Upon "close", this empties
 	var coords = [];
-
-
 
 	// what function are we currently "doing" - removes the event listener of the functions we are NOT currently doing
 	var currentEventListener = [];
@@ -116,57 +119,112 @@
 	// create an SVG Point to use for the outline's turns
 	var pt = svg.createSVGPoint();
 
+	// put the existing areas reference and add hover text effect to see area and walkability 
+	areaHelper(polys, waypoints, areaHov);
+
 	// put the listeners in this scope so we can get to them
 	var listenDoors = function(evt) {
+
+		document.getElementById("descriptive-text").textContent = "Click the map to add door nodes. Door nodes can connect between areas. Hold shift and click to remove a previously added node."
 		// doors are added as salmon nodes
 		if (state.length >= 1){
-			circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon","mapNode")
-	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov[areaHov.length-1]});
+
+			// if the shiftkey is on, removes the door rather than adds a new one
+			if (!evt.shiftKey) {
+				circleFactory(doors, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "salmon", "mapNode");
+
+				waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'door', area: areaHov[areaHov.length-1]});
+			}  
+
+			if(evt.shiftKey) {
+	   			var cx = evt.target.getAttributeNS(null, "cx");
+	   			var cy = evt.target.getAttributeNS(null, "cy");
+
+	   			var badpoint = waypoints.filter(function(x){ if ((String(x.x) == evt.target.getAttributeNS(null,"cx")) && (String(x.y) == evt.target.getAttributeNS(null,"cy"))){x.type='ignore'; console.log(x)}})
+	   		} 		
 		}
 	}
 
 	var listenWaypoints = function(evt) {
+		
+		document.getElementById("descriptive-text").textContent = "Click the map to add waypoint nodes. Waypoint nodes are limited to their individual areas. Hold shift and click to remove a previously added node."
 		// waypoints are added as yellow nodes
 		if (state.length >= 1) {
-			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150", "mapNode")
-	   		waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
+
+			// if the shiftkey is on, removes the door rather than adds a new one
+			if (!evt.shiftKey) {
+				circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "40", "#f0e150", "mapNode")
+	   		
+	   			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'poi', area: areaHov[areaHov.length-1]});
+	   		}
+
+	   		if(evt.shiftKey) {
+	   			var cx = evt.target.getAttributeNS(null, "cx");
+	   			var cy = evt.target.getAttributeNS(null, "cy");
+
+	   			var badpoint = waypoints.filter(function(x){ if ((String(x.x) == evt.target.getAttributeNS(null,"cx")) && (String(x.y) == evt.target.getAttributeNS(null,"cy"))){x.type='ignore'; console.log(x)}})
+	   		}
 		}
 	}
 
 	var listenObstacles = function(evt) {
-		// obstacles are added as red nodes. Upon drawing the obstacle is avoided
+		// obstacles are added as red nodes. Upon drawing the obstacle is avoided.
+
+		document.getElementById("descriptive-text").textContent = "Click the map to identify the obstacles created in the loaded obstacle layers as nodes. Obstacle nodes are used to deflect walk paths away. Obstacles are currently added by area. If obstacles are not added, walk paths will cross through obstacles."
+
 		var obs = document.getElementById("obstacles");
+		
 		for (var i = 0; i < obs.children.length; ++ i) {
 			var obscoords = parsePath(obstacles.children[i]);
+			
 			for (var ii = 0; ii < obscoords.length; ++ ii) {
-				circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red", "mapNode");
-				waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area:areaHov[areaHov.length-1]})
+				// if it's not shift deleted let's add it
+				if (!evt.shiftKey){
+					
+					circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red", "mapNode");
+				
+					waypoints.push({x: Number(obscoords[ii][0][0].toFixed(0)), y: Number(obscoords[ii][0][1].toFixed(0)), type: 'obstacle', area:areaHov[areaHov.length-1]})
+				}
+
+				// if it is shift deleted, lets remove it
+				if(evt.shiftKey) {
+	   				var cx = evt.target.getAttributeNS(null, "cx");
+	   				var cy = evt.target.getAttributeNS(null, "cy");
+
+	   				var badpoint = waypoints.filter(function(x){ if ((String(x.x) == evt.target.getAttributeNS(null,"cx")) && (String(x.y) == evt.target.getAttributeNS(null,"cy"))){x.type='ignore'; console.log(x)}})
+	   			}
 			}			
 		}
 	}
 
 	var listenVoronoi = function(evt) {
 		if (waypoints.length >= 1) {
-			var aH = areaHov[areaHov.length-1]
-			voronoiHelper(waypoints, aH);
+			voronoiHelper(waypoints, areaHov);
 		}
 	}
 
 	var listenDelaunay = function(evt) {
 		if (waypoints.length >= 1) {
 			var areaHov = evt.target.getAttributeNS(null, "id");
+			var cssget = document.getElementById(areaHov);
+			var walkable = cssget.classList.contains("walkable");
+			// when operating only on one room, we constrain to that room, except the door node
 			delaunayHelper(waypoints, areaHov);
 		}
 	}
 
 	var listenAreas = function(evt) {
+
 		// if no coordinates are defined yet
 		if (coords.length === 0) {
+			
 			// check if there are any areas drawn but not set and if so, set their class to areas
 			var p0 = document.getElementsByClassName("drawing");	
 
+			// if there is an area drawn but not yet set, 
 			if (p0.length > 0) {
 				var w2 = document.getElementById("waypoints");
+				
 				for (var i = 0; i < p0.length; ++i) {
 					p0[i].setAttributeNS(null, "class", "areas");
 				}
@@ -185,11 +243,13 @@
 		}
 		
 		// if there is some state already in the bank
-		if (state.length >=1){
+		if (state.length >=1) {
+			
 			// create a marker for the most recently drawn circle
 			circleFactory(way, state[state.length-1].x.toFixed(0), state[state.length-1].y.toFixed(0), "30", "#a8a8a8", "mapNode");
 			coords.push([Number(state[state.length-1].x.toFixed(0)), Number(state[state.length-1].y.toFixed(0))]);
 			var w = document.getElementById("waypoints").lastElementChild;
+			
 			w.setAttributeNS(null, "class", "removable");
 			waypoints.push({x: Number(state[state.length-1].x.toFixed(0)), y: Number(state[state.length-1].y.toFixed(0)), type: 'areas', area: areaHov[areaHov.length-1]})
 		}
@@ -202,7 +262,7 @@
 		// waypoints = [];
 		// polys = [];
 		// coords = [];
-		// areaHelper(polys, waypoints, areaHov)
+		//areaHelper(polys, waypoints, areaHov)
 		// var mapLocations = pl(waypoints, roads)
 		// for (var i = 0; i < bob.length; ++i) {
 		// 	var loc = bob[i].name.split("-");
@@ -219,8 +279,7 @@
 		pl(waypoints)
 	}
 	
-	// put the existing areas reference and add hover text effect to see area and walkability 
-	areaHelper(polys, waypoints, areaHov);
+	
 
 	// click doors and add them to the waypoints
 	doorsButton.addEventListener('click', function(evt) {
@@ -277,6 +336,7 @@
 
 	// click demo to generate a bunch of waypoints and clear the things
 	demoButton.addEventListener('click', function(evt) {
+
 		if (currentEventListener.length >= 1) {
 			svg.removeEventListener('click', currentEventListener[currentEventListener.length-1])
 		}
@@ -288,7 +348,7 @@
 		currentEventListener.push(listenDemo);
 		d3.selectAll(".active").attr("class", "passive");
 		demoButton.setAttribute('class', 'active');
-	})
+	}, false);
 
 	// generate voronoi waypoints for the main outline or a selected area
 	voronoiButton.addEventListener('click', function(evt) {
@@ -337,9 +397,7 @@
       // Use loc.x and loc.y here
       var out = document.getElementById("output-button");
       out.textContent = state[state.length-1].x.toFixed(0) + ", " + state[state.length-1].y.toFixed(0);
-      
     })
-	
 }
 
 

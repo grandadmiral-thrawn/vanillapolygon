@@ -1,6 +1,36 @@
 body {
   background: #030303;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Helvetica, sans-serif;
+}
+
+.draggable {
+  cursor: move;
+}
+
+.linkable {
+  stroke-width: 20;
+  stroke: cyan;
+  color: blue;
+}
+
+.ignore {
+  display: none;
+}
+
+#container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* describes what the buttons do on hover of buttons */
+#descriptive-text {
+  color: white;
+  height: 150px;
+  width: 1000px;
+  font-size: 1em;
+  font-family: Helvetica, sans-serif;
 }
 
 /* styles for display on the top to show what 'mode' is active*/
@@ -113,7 +143,7 @@ body {
 
 .distancePath {
 	stroke: #666666;
-	stroke-width: 1px;
+	stroke-width: 20px;
 	fill: none;
 }
 
@@ -125,7 +155,7 @@ body {
 
 .mapLink {
 	stroke:#ffffff;
-	stroke-width: .5px;
+	stroke-width: 1px;
 }
 
 .mapNode {
@@ -137,7 +167,7 @@ body {
 .mapLinkActive {
 	fill:#ffffff;
 	stroke:#c13030;
-	stroke-width: 1px;
+	stroke-width: 20px;
 }
 
 .mapNodeActive {
@@ -157,6 +187,6 @@ p {
 }
 
 .active1 circle {
-  stroke: "#fff;
+  stroke: #fff;
   stroke-width: 2px;
 }

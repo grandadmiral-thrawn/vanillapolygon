@@ -3,16 +3,136 @@ var roads = {};
 var mapRoads = [];
 var placeKeys = [];
 var shortRoute = {};
-var to = "",
-    from = "";
+var to = "";
+var from = "";
 
 function removeWhiteSpace(str)
 {
   return str.replace(/\s/g, '');
 }
 
+function updateMap()
+{
+    //reset our highlighted styles
+    d3.selectAll(".mapLinkActive").attr("class","mapLink");
+    d3.selectAll(".mapNodeActive").attr("class","mapNode");
+
+    var lastPlace = "";
+    console.log(shortRoute)
+    forEach(shortRoute.places, function(place){
+        d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
+        //Try both directions to find link
+        d3.select("#" + removeWhiteSpace(place) + "-" + removeWhiteSpace(lastPlace)).attr("class","mapLinkActive");
+        d3.select("#" + removeWhiteSpace(lastPlace) + "-" + removeWhiteSpace(place)).attr("class","mapLinkActive");
+        lastPlace = place;
+    });
+}
+
+function drawStraightRoute(){
+
+  var shortPath = convertRoute(shortRoute);
+  console.log(shortPath)
+
+  //Clear out the old SVG if one exists.
+  d3.select("#routeContainer").selectAll("svg").remove();
+
+  var mapWidth = 1000;
+  var mapHeight = 600;
+  //Setup our chart size, radius of nodes, padding, and textSize
+  var w = mapWidth - 120, 
+    h = mapHeight - 40,
+    r = 6,
+    lp = 20, //padding for left side of chart range
+    //padding for right, HACK way to make sure text labels aren't clipped.
+    //the "correct" solution might be to draw the entire chart off screen check for clipping, then redraw on-screen.
+    rp = 100, 
+    xAx = h/3 + .5, // axis height
+    textSize = 12;
+
+    var x = d3.scaleLinear()
+    .domain([0, shortRoute.length])
+    .range([r+lp, w-rp]);
+
+//Quantize scale to avoid overlaps
+function fit(val){
+
+    var scaled = x(val);
+    return scaled-scaled%((r*2));
+}
+
+//Create the SVG needed to display the route
+var chart = d3.select("#routeContainer").append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+//Create the circles that will represent our map points
+var node = d3.select("#routeContainer").select("svg").selectAll("circle")
+    .data(shortPath);
+
+//Create the text labels for the node names
+var placeLabel = d3.select("#routeContainer").select("svg").selectAll("text")
+    .data(shortPath);
+
+var distanceLabel = d3.select("#routeContainer").select("svg").selectAll("distanceLabel")
+    .data(shortPath);
+
+var distancePath = d3.select("#routeContainer").select("svg").selectAll("distancePath")
+    .attr("class","distancePath")
+    .data(shortPath);
+
+// Enter…
+node.enter().append("circle")
+    .attr("class","routeNode")
+    .attr("cx",function(d) {
+      return fit(d.distanceFromStart);})
+    .attr("cy",xAx)
+    .attr("r",r);
+
+placeLabel.enter().append("text")
+    .attr("class","placeLabel")
+    .style("text-anchor","start")
+    .style("font-size",textSize + "px")
+    .text(function(d) {return d.place})
+    .attr("transform",function(d) { return "translate(" + (fit(d.distanceFromStart) + r/2 ) + ", " + (xAx + r + (textSize/2)) + ") rotate(45)"; });
+
+distanceLabel.enter().append("text")
+    .attr("class","distanceLabel")
+    .style("text-anchor","middle")
+    .style("font-size", textSize*.8 + "px")
+    .text(function(d) {return d.distanceFromLast})
+    .attr("transform",function(d) { 
+      if(d.distanceFromLast != 0) 
+        return "translate(" + ((fit(d.distanceFromStart - d.distanceFromLast) + fit(d.distanceFromStart))/2.0)  + ", " + (xAx - 4*r - 5) + ")";     
+       // return "translate(" + (fit(d.distanceFromStart - d.distanceFromLast) + (fit(d.distanceFromStart) - fit(d.distanceFromStart - d.distanceFromLast))/2.0)  + ", " + (xAx - 4*r - 5) + ")"; 
+      else return ""});
+
+distancePath.enter().append("path")
+  .attr("class","distancePath")
+  .attr("d",function(d){
+      if(d.distanceFromLast != 0) {
+        var a = d.distanceFromStart;
+        var b = d.distanceFromLast;
+
+        //Path definition for curly brackets
+        return ("M " + fit(a) + " " + (xAx-r) +
+          " Q " + fit(a) + " " + (xAx-2*r) + " " + (fit(a) - .25*(fit(a)-fit(a-b))) + " " + (xAx -2*r) + 
+          " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r) +
+          " M " + (fit(a - b)) + " " + (xAx-r) +
+          " Q " + (fit(a - b)) + " " + (xAx-2*r) + " " + (fit(a) - .75*(fit(a)-fit(a-b))) + " " + (xAx - 2*r) + 
+          " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r));
+    }
+      else return });
+
+// Exit…
+node.exit().remove();
+placeLabel.exit().remove();
+distanceLabel.exit().remove();
+distancePath.exit().remove();
+
+}
+
 var nodeClicked = function(evt) {   
-  var place = evt.target.getAttributeNS(null,"id");
+  var place = evt.target.getAttributeNS(null, "id");
   //console.log(place)
   //d3.select("#" + removeWhiteSpace(place)).attr("class","mapNodeActive");
   var p =document.getElementById(place);
@@ -66,9 +186,8 @@ var placeKeysCB = function(err, roads, mapLocations, placeKeys, mapRoads) {
   });
   
   var nodes = document.getElementsByClassName("mapNode");
-  console.log(nodes)
   for (var i = 0; i < nodes.length; ++i) {
-    console.log(nodes[i])
+    //console.log(nodes[i])
     nodes[i].addEventListener("click", nodeClicked)
   }
 }
