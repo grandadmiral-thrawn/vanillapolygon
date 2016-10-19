@@ -37,7 +37,7 @@ function drawStraightRoute(){
   d3.select("#routeContainer").selectAll("svg").remove();
 
   var mapWidth = 1000;
-  var mapHeight = 600;
+  var mapHeight = 400;
   //Setup our chart size, radius of nodes, padding, and textSize
   var w = mapWidth - 120, 
     h = mapHeight - 40,
@@ -55,7 +55,6 @@ function drawStraightRoute(){
 
 //Quantize scale to avoid overlaps
 function fit(val){
-
     var scaled = x(val);
     return scaled-scaled%((r*2));
 }
@@ -196,7 +195,6 @@ var getMapLocations = function(err, waypoints, roads, placeKeys, mapRoads) {
   if (err) {
     console.log(err)
   }
-  console.log(waypoints)
   var mapLocations = [];
 
   // do not define open locations as actual locations

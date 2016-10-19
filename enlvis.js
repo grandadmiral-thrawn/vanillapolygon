@@ -77,106 +77,106 @@ map(function(place){
 return newRoute;
 } 
 
-// //Visualize the Shortest Path on a subway style Route Map
-// function drawStraightRoute(){
+//Visualize the Shortest Path on a subway style Route Map
+function drawStraightRoute(){
 
-// var shortPath = convertRoute(shortRoute);
+var shortPath = convertRoute(shortRoute);
 
-// //Clear out the old SVG if one exists.
-// d3.select("#routeContainer").selectAll("svg").remove();
+//Clear out the old SVG if one exists.
+d3.select("#routeContainer").selectAll("svg").remove();
 
-// //Setup our chart size, radius of nodes, padding, and textSize
-// var w = mapWidth - 120, 
-//     h = mapHeight - 40,
-//     r = 6,
-//     lp = 20, //padding for left side of chart range
-//     //padding for right, HACK way to make sure text labels aren't clipped.
-//     //the "correct" solution might be to draw the entire chart off screen check for clipping, then redraw on-screen.
-//     rp = 100, 
-//     xAx = h/3 + .5, // axis height
-//     textSize = 12;
+//Setup our chart size, radius of nodes, padding, and textSize
+var w = mapWidth - 120, 
+    h = mapHeight - 40,
+    r = 6,
+    lp = 20, //padding for left side of chart range
+    //padding for right, HACK way to make sure text labels aren't clipped.
+    //the "correct" solution might be to draw the entire chart off screen check for clipping, then redraw on-screen.
+    rp = 100, 
+    xAx = h/3 + .5, // axis height
+    textSize = 12;
 
-//     var x = d3.scale.linear()
-//     .domain([0, shortRoute.length])
-//     .range([r+lp, w-rp]);
+    var x = d3.scale.linear()
+    .domain([0, shortRoute.length])
+    .range([r+lp, w-rp]);
 
-// //Quantize scale to avoid overlaps
-// function fit(val){
+//Quantize scale to avoid overlaps
+function fit(val){
 
-//     var scaled = x(val);
-//     return scaled-scaled%((r*2));
-// }
+    var scaled = x(val);
+    return scaled-scaled%((r*2));
+}
 
-// //Create the SVG needed to display the route
-// var chart = d3.select("#routeContainer").append("svg")
-//     .attr("width", w)
-//     .attr("height", h);
+//Create the SVG needed to display the route
+var chart = d3.select("#routeContainer").append("svg")
+    .attr("width", w)
+    .attr("height", h);
 
-// //Create the circles that will represent our map points
-// var node = d3.select("#routeContainer").select("svg").selectAll("circle")
-//     .data(shortPath);
+//Create the circles that will represent our map points
+var node = d3.select("#routeContainer").select("svg").selectAll("circle")
+    .data(shortPath);
 
-// //Create the text labels for the node names
-// var placeLabel = d3.select("#routeContainer").select("svg").selectAll("text")
-//     .data(shortPath);
+//Create the text labels for the node names
+var placeLabel = d3.select("#routeContainer").select("svg").selectAll("text")
+    .data(shortPath);
 
-// var distanceLabel = d3.select("#routeContainer").select("svg").selectAll("distanceLabel")
-//     .data(shortPath);
+var distanceLabel = d3.select("#routeContainer").select("svg").selectAll("distanceLabel")
+    .data(shortPath);
 
-// var distancePath = d3.select("#routeContainer").select("svg").selectAll("distancePath")
-//     .attr("class","distancePath")
-//     .data(shortPath);
+var distancePath = d3.select("#routeContainer").select("svg").selectAll("distancePath")
+    .attr("class","distancePath")
+    .data(shortPath);
 
-// // Enter…
-// node.enter().append("circle")
-//     .attr("class","routeNode")
-//     .attr("cx",function(d) {
-//       return fit(d.distanceFromStart);})
-//     .attr("cy",xAx)
-//     .attr("r",r);
+// Enter…
+node.enter().append("circle")
+    .attr("class","routeNode")
+    .attr("cx",function(d) {
+      return fit(d.distanceFromStart);})
+    .attr("cy",xAx)
+    .attr("r",r);
 
-// placeLabel.enter().append("text")
-//     .attr("class","placeLabel")
-//     .style("text-anchor","start")
-//     .style("font-size",textSize + "px")
-//     .text(function(d) {return d.place})
-//     .attr("transform",function(d) { return "translate(" + (fit(d.distanceFromStart) + r/2 ) + ", " + (xAx + r + (textSize/2)) + ") rotate(45)"; });
+placeLabel.enter().append("text")
+    .attr("class","placeLabel")
+    .style("text-anchor","start")
+    .style("font-size",textSize + "px")
+    .text(function(d) {return d.place})
+    .attr("transform",function(d) { return "translate(" + (fit(d.distanceFromStart) + r/2 ) + ", " + (xAx + r + (textSize/2)) + ") rotate(45)"; });
 
-// distanceLabel.enter().append("text")
-//     .attr("class","distanceLabel")
-//     .style("text-anchor","middle")
-//     .style("font-size", textSize*.8 + "px")
-//     .text(function(d) {return d.distanceFromLast})
-//     .attr("transform",function(d) { 
-//       if(d.distanceFromLast != 0) 
-//         return "translate(" + ((fit(d.distanceFromStart - d.distanceFromLast) + fit(d.distanceFromStart))/2.0)  + ", " + (xAx - 4*r - 5) + ")";     
-//        // return "translate(" + (fit(d.distanceFromStart - d.distanceFromLast) + (fit(d.distanceFromStart) - fit(d.distanceFromStart - d.distanceFromLast))/2.0)  + ", " + (xAx - 4*r - 5) + ")"; 
-//       else return ""});
+distanceLabel.enter().append("text")
+    .attr("class","distanceLabel")
+    .style("text-anchor","middle")
+    .style("font-size", textSize*.8 + "px")
+    .text(function(d) {return d.distanceFromLast})
+    .attr("transform",function(d) { 
+      if(d.distanceFromLast != 0) 
+        return "translate(" + ((fit(d.distanceFromStart - d.distanceFromLast) + fit(d.distanceFromStart))/2.0)  + ", " + (xAx - 4*r - 5) + ")";     
+       // return "translate(" + (fit(d.distanceFromStart - d.distanceFromLast) + (fit(d.distanceFromStart) - fit(d.distanceFromStart - d.distanceFromLast))/2.0)  + ", " + (xAx - 4*r - 5) + ")"; 
+      else return ""});
 
-// distancePath.enter().append("path")
-//   .attr("class","distancePath")
-//   .attr("d",function(d){
-//       if(d.distanceFromLast != 0) {
-//         var a = d.distanceFromStart;
-//         var b = d.distanceFromLast;
+distancePath.enter().append("path")
+  .attr("class","distancePath")
+  .attr("d",function(d){
+      if(d.distanceFromLast != 0) {
+        var a = d.distanceFromStart;
+        var b = d.distanceFromLast;
 
-//         //Path definition for curly brackets
-//         return ("M " + fit(a) + " " + (xAx-r) +
-//           " Q " + fit(a) + " " + (xAx-2*r) + " " + (fit(a) - .25*(fit(a)-fit(a-b))) + " " + (xAx -2*r) + 
-//           " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r) +
-//           " M " + (fit(a - b)) + " " + (xAx-r) +
-//           " Q " + (fit(a - b)) + " " + (xAx-2*r) + " " + (fit(a) - .75*(fit(a)-fit(a-b))) + " " + (xAx - 2*r) + 
-//           " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r));
-//     }
-//       else return });
+        //Path definition for curly brackets
+        return ("M " + fit(a) + " " + (xAx-r) +
+          " Q " + fit(a) + " " + (xAx-2*r) + " " + (fit(a) - .25*(fit(a)-fit(a-b))) + " " + (xAx -2*r) + 
+          " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r) +
+          " M " + (fit(a - b)) + " " + (xAx-r) +
+          " Q " + (fit(a - b)) + " " + (xAx-2*r) + " " + (fit(a) - .75*(fit(a)-fit(a-b))) + " " + (xAx - 2*r) + 
+          " T " + ((fit(a - b) + fit(a))*.5) + " " + (xAx-4*r));
+    }
+      else return });
 
-// // Exit…
-// node.exit().remove();
-// placeLabel.exit().remove();
-// distanceLabel.exit().remove();
-// distancePath.exit().remove();
+// Exit…
+node.exit().remove();
+placeLabel.exit().remove();
+distanceLabel.exit().remove();
+distancePath.exit().remove();
 
-// }
+}
 
 function nodeClicked(place)
 {   

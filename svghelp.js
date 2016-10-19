@@ -6,7 +6,9 @@ var randomPointFiller = function(waypoints) {
 	var way = document.getElementById("waypoints");
 
 	for (var i = 0; i < obs.children.length; ++ i) {
+		// find the obstacles and be sure you don't put paths in them
 		var obscoords = parsePath(obstacles.children[i]);
+		
 		for (var ii = 0; ii < obscoords.length; ++ ii) {
 			circleFactory(way, obscoords[ii][0][0].toFixed(0), obscoords[ii][0][1].toFixed(0), "40", "red", "mapNode");
 			// we can't know where the obstacle is in the bulk approach so we just give it a temp
@@ -15,15 +17,19 @@ var randomPointFiller = function(waypoints) {
 	}
 
 	for (var i = 0; i < areas.children.length; ++i) {
+
 		var p = areas.children[i];
 		var pts = parsePath(p.children[0])
 		var ptsx = pts.map(function(x){return [x[0][0], x[0][1]]})
 		var centroid = d3.polygonCentroid(ptsx);
 		
+		if (p.children[0].classList.contains("walkable")) {
+			latticegen(p.children[0], waypoints)
+		}
 		circleFactory(ct, centroid[0], centroid[1], "40", "cornflowerblue", "mapNode");
+		
 		waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: p.children[0].getAttributeNS(null, "id")});
 	}
-	//ct.setAttributeNS(null, "class", "hidden-centroid");
 }
 
 var mainAreaFiller = function(waypoints) {
@@ -32,7 +38,9 @@ var mainAreaFiller = function(waypoints) {
 	var pts = parsePath(area)
 	var ptsx = pts.map(function(x){return [x[0][0], x[0][1]]})
 	var ct = document.getElementById("generated");
+
 	var centroid = d3.polygonCentroid(ptsx);
+
 	circleFactory(ct, Number(centroid[0].toFixed(0)), Number(centroid[1].toFixed(0)), "40", "cornflowerblue", "mapNode");
 	waypoints.push({x: Number(centroid[0].toFixed(0)), y: Number(centroid[1].toFixed(0)), type: 'centroid', area: "open"});
 }
@@ -46,24 +54,26 @@ var mainAreaDelauneyDemo = function(waypoints) {
 	for (var i = 0; i < areas.children.length; ++i) {
 
 		var id = areas.children[i].children[0].getAttributeNS(null, "id");
-		console.log(id)
+		
 		var cssget = document.getElementById(id);
 		var walkable = cssget.classList.contains("walkable");
+		console.log(walkable)
 		if (walkable !== true) {
 			delaunayHelper(waypoints, id);
+		
 		} else {
 			waypoints.map(function(x){if (x.area === id){
 				x.area = "open";
 			}});
 		}
 	}
-	delaunayHelper(waypoints,"open")
+	delaunayLimited(waypoints,"open")
 
 	function drawCells(centroids) {
   		centroids
-      	.attr("d", function(d) { console.log(d); if (d==null){
-      		return null
-      	} else {
+      	.attr("d", function(d) {//if (d==null){
+      		//return null
+      	//} else {
       		return d == null ? null : "M " + d.join(" L" ) + "Z"; 
       	}
       	})
@@ -327,7 +337,8 @@ var centroidMaker = function(waypoints, areaHov) {
 
 
 var delaunayHelper = function(waypoints, areaHov) {
-	// draws delaunay Triangles 
+	
+	// draws delaunay triangles 
 	function redrawTriangle(triangle) {
   	triangle
       .attr("d", function(d) { 
@@ -455,14 +466,8 @@ var delaunayLimited = function(waypoints, areaHov) {
 		var s = s.concat(so);
 	}
 
-	// if (areaHov[areaHov.length-1] === "open") {
-	// 	var s = waypoints.filter(function(x) {
-	// 		if ((x.type !== "corners") && (x.area ==="open")){
-	// 			return x
-	// 		}
-	// 	});
-	// }
 	var s2 = s.map(function(d) {return [d.x, d.y]});	
+	
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
 		.selectAll(".triangles")
@@ -627,13 +632,13 @@ var areaHelper = function(polys, waypoints, areaHov) {
 	mainOutlineHelper(null, polys);
 }
 
-var simplePolygonHelper = function(path, polys) {
+var simplePolygonHelper = function(path, polys, areaHov) {
 	// computes the area and makes display settings of a newly drawn polygon
 	var conversionFactor = 0.0004;
 	var polygonIn = polygonSampledFromPath(path, 1000);
 	var thisArea = polyArea(polygonIn);
 
-	var counter = document.getElementById("areas").children.length
+	var counter = document.getElementById("areas").children.length;
 	var id = "areas-" + counter;
 	path.setAttributeNS(null, "id", id);
 	polys.push({'polygon': polygonIn, 'area': thisArea*conversionFactor, 'units': 'feet', 'id': id, 'walkable': 0});
@@ -671,7 +676,6 @@ var simplePolygonHelper = function(path, polys) {
 	path.parentNode.addEventListener("mouseover", function(evt) {
 		evt.target.parentNode.children[1].setAttributeNS(null, "class", "details");
 		areaHov.push(path.getAttributeNS(null, "id"));
-		console.log(areaHovareaHov[areaHov.length-1]);
 	});
 
 	path.parentNode.addEventListener("mouseout", function(evt) {

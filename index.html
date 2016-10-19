@@ -331,7 +331,7 @@
 		randomPointFiller(waypoints);
 		mainAreaFiller(waypoints);
 		mainAreaDelauneyDemo(waypoints);
-		pl(waypoints)
+		pl(waypoints);
 	}
 	
 	
@@ -442,7 +442,7 @@
 		p.setAttributeNS(null, "d", d3path);
 		p.setAttributeNS(null, "class", "areas");
 		var counter= document.getElementById("areas").length;
-		simplePolygonHelper(p, polys)
+		simplePolygonHelper(p, polys, areaHov)
 		coords = [];
 	})
 
