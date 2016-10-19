@@ -58,24 +58,24 @@ var mainAreaDelauneyDemo = function(waypoints) {
 		var cssget = document.getElementById(id);
 		var walkable = cssget.classList.contains("walkable");
 		console.log(walkable)
+		// if the area is NOT walkable, delauney triangulate on that area only
 		if (walkable !== true) {
 			delaunayHelper(waypoints, id);
 		
 		} else {
+			// otherwise, sest the area to open
 			waypoints.map(function(x){if (x.area === id){
 				x.area = "open";
 			}});
 		}
 	}
+
 	delaunayLimited(waypoints,"open")
 
 	function drawCells(centroids) {
   		centroids
-      	.attr("d", function(d) {//if (d==null){
-      		//return null
-      	//} else {
+      	.attr("d", function(d) {
       		return d == null ? null : "M " + d.join(" L" ) + "Z"; 
-      	}
       	})
       	.attr("class", "mapLink")
       	.style("fill","none")
@@ -195,6 +195,7 @@ var latticegen = function(pathelement, waypoints){
 		}
 	}
 }
+
 
 
 var intersection = function(x0, y0, r0, x1, y1, r1) {
@@ -375,13 +376,92 @@ var delaunayHelper = function(waypoints, areaHov) {
 	var voronoi = d3.voronoi();
 	var aselected = document.getElementById(areaHov[areaHov.length-1]);
 
-	latticegen(aselected, waypoints);
+	// all who are in that area -- when the area is opened up in demo this is "open" area
+	var sa = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && (x.type !=="corners")){ return x}});
 
-	// all who are in that area -- when the area is opened up in demo this is "open"
-	var sa = waypoints.filter(function(x){if (x.area === areaHov[areaHov.length-1]){ return x}});
+	var thispolygon = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && (x.type==="corners")){ return x}});
+	var polypoints = thispolygon.map(function(x) {return [x.x, x.y]})
+
+	// if there are points of interest, we want to generate the lattice but not include it in the delauney first click
+	var hasPOI = sa.filter(function(x) {if (x.type === "poi"){return x}});
+
+	// get the doors in this area, and the doors in neighboring areas. Must get separately because you could get a bunch of doors in some other areas.
+	var thisdoor = waypoints.filter(function(x) {if ((x.type === "door") && (x.area === areaHov[areaHov.length-1])){return x}})
+	var sd = waypoints.filter(function(x) {if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
+
+	if ((thisdoor && thisdoor.length >= 1) && (sd && sd.length >= 1)) {
+
+		// if there are doors, draw links between them 
+		var doortriangles = d3.selectAll("#delaunay").append("g");
+		var doorlinks = d3.selectAll("#voronoi").append("g")
+		var alldoor = thisdoor.concat(sd);
+		
+		var temp = alldoor.map(function(x) {return [Number(x.x), Number(x.y)]})
+
+		doortriangles.attr("id", "doortriangles")
+			.selectAll(".doortriangles")
+			.data(voronoi.triangles(temp))
+			.enter()
+			.append("path")
+			.call(redrawTriangle)
+
+		doorlinks.attr("id", "doorlinks")
+			.selectAll(".doorlinks")
+			.data(voronoi.links(temp))
+			.enter()
+			.append("line")
+			.call(redrawLink)
+
+		var doorlinksdata = document.getElementById("doorlinks").children;
+		
+		for (var i = 0; i < doorlinksdata.length; ++i) {
+			
+			var pt1 = [Number(doorlinksdata[i].getAttributeNS(null, "x1")), Number(doorlinksdata[i].getAttributeNS(null,"y1"))];
+			var pt2 = [Number(doorlinksdata[i].getAttributeNS(null, "x2")), Number(doorlinksdata[i].getAttributeNS(null,"y2"))];
+			console.log(pt1)
+			console.log(pt2)
+			console.log(d3.polygonContains(polypoints, pt1))
+			console.log(d3.polygonContains(polypoints, pt2))
+
+			// if the polygon itself does not contain the points for at least 1 door, remove it
+			if ((d3.polygonContains(polypoints, pt1)==false) && (d3.polygonContains(polypoints, pt2))==false) {
+				d3.select(doorlinksdata[i]).attr("class", "removeable")
+			}
+		}
+		d3.selectAll(".removeable").remove()
+	}
 	
-	// all the doors, even those not in that area
-	var sd = waypoints.filter(function(x){if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
+
+	// if there are POI in the area we don't want to replace their connections with lattice
+	if (hasPOI && hasPOI.length > 1) {
+
+		var temp = hasPOI.map(function(x){return [x.x, x.y]});
+		
+		var triangles2 = d3.selectAll("#delaunay")
+			.append("g");
+			
+		triangles2.attr("id", "POI_triangles")
+			.attr("class","POI_triangles")
+			.selectAll(".POI_triangles")
+			.data(voronoi.triangles(hasPOI))
+			.enter()
+			.append("path")
+			.call(redrawTriangle)
+
+		d3.select("#voronoi")
+			.attr("class", "links_original")
+			.selectAll(".links_original")
+			.data(voronoi.links(hasPOI))
+			.enter().append("line")
+			.call(redrawLink);
+
+			//latticegenXclude(aselected, waypoints);
+		}  else {
+
+			latticegen(aselected, waypoints);
+		}
+	
+
 	var s = sa.concat(sd);
 	
 	if (areaHov[areaHov.length-1] === "area-1") {
@@ -398,6 +478,7 @@ var delaunayHelper = function(waypoints, areaHov) {
 	}
 
 	var s2 = s.map(function(d) {return [d.x, d.y]});
+	
 	var triangle = d3.selectAll("#delaunay")
 		.attr("class", "triangles")
 		.selectAll(".triangles")
@@ -516,7 +597,7 @@ var areaHelper = function(polys, waypoints, areaHov) {
 
 		var othercorners = document.getElementById("corners");
 		var occhildren = othercorners.children;
-		console.log(occhildren);
+		
 
 		for (var ii = 0; ii < corners.length; ++ii) {
 			circleFactory(c, corners[ii][0][0], corners[ii][0][1], "30", fc, "mapNode")
