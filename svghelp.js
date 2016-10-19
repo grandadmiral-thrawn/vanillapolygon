@@ -379,49 +379,38 @@ var delaunayHelper = function(waypoints, areaHov) {
 	// all who are in that area -- when the area is opened up in demo this is "open" area
 	var sa = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && (x.type !=="corners")){ return x}});
 
+	// this is the boundary of this particular area and the points that define it for d3 to use in parsing
 	var thispolygon = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && (x.type==="corners")){ return x}});
 	var polypoints = thispolygon.map(function(x) {return [x.x, x.y]})
 
-	// if there are points of interest, we want to generate the lattice but not include it in the delauney first click
+	// if there are points of interest, we want to generate for it a triangulation, not a lattice
 	var hasPOI = sa.filter(function(x) {if (x.type === "poi"){return x}});
 
-	// get the doors in this area, and the doors in neighboring areas. Must get separately because you could get a bunch of doors in some other areas.
+	// get the doors in this area, and the doors in neighboring areas. Must get separately because you could get a bunch of doors in some other areas and not just the pairs between you and neighbors
 	var thisdoor = waypoints.filter(function(x) {if ((x.type === "door") && (x.area === areaHov[areaHov.length-1])){return x}})
 	var sd = waypoints.filter(function(x) {if ((x.type === "door") && (x.area !== areaHov[areaHov.length-1])){return x}});
 
+	// checking if there are doors and links between two areas
 	if ((thisdoor && thisdoor.length >= 1) && (sd && sd.length >= 1)) {
-
 		// if there are doors, draw links between them 
-		var doortriangles = d3.selectAll("#delaunay").append("g");
 		var doorlinks = d3.selectAll("#voronoi").append("g")
 		var alldoor = thisdoor.concat(sd);
 		
-		var temp = alldoor.map(function(x) {return [Number(x.x), Number(x.y)]})
+		// draw in the doors
+		var temp = alldoor.map(function(x) {return [Number(x.x), Number(x.y)]});
 
-		doortriangles.attr("id", "doortriangles")
-			.selectAll(".doortriangles")
-			.data(voronoi.triangles(temp))
-			.enter()
-			.append("path")
-			.call(redrawTriangle)
-
-		doorlinks.attr("id", "doorlinks")
+		doorlinks.attr("id", "doorlinks-" + areaHov[areaHov.length-1])
 			.selectAll(".doorlinks")
 			.data(voronoi.links(temp))
 			.enter()
 			.append("line")
 			.call(redrawLink)
 
-		var doorlinksdata = document.getElementById("doorlinks").children;
-		
+		// remove doors that connect areas that are not at least one in that area (if you have 2 doors)
+		var doorlinksdata = document.getElementById("doorlinks-"  + areaHov[areaHov.length-1]).children;
 		for (var i = 0; i < doorlinksdata.length; ++i) {
-			
 			var pt1 = [Number(doorlinksdata[i].getAttributeNS(null, "x1")), Number(doorlinksdata[i].getAttributeNS(null,"y1"))];
 			var pt2 = [Number(doorlinksdata[i].getAttributeNS(null, "x2")), Number(doorlinksdata[i].getAttributeNS(null,"y2"))];
-			console.log(pt1)
-			console.log(pt2)
-			console.log(d3.polygonContains(polypoints, pt1))
-			console.log(d3.polygonContains(polypoints, pt2))
 
 			// if the polygon itself does not contain the points for at least 1 door, remove it
 			if ((d3.polygonContains(polypoints, pt1)==false) && (d3.polygonContains(polypoints, pt2))==false) {
@@ -431,42 +420,50 @@ var delaunayHelper = function(waypoints, areaHov) {
 		d3.selectAll(".removeable").remove()
 	}
 	
-
 	// if there are POI in the area we don't want to replace their connections with lattice
 	if (hasPOI && hasPOI.length > 1) {
 
-		var temp = hasPOI.map(function(x){return [x.x, x.y]});
-		
-		var triangles2 = d3.selectAll("#delaunay")
-			.append("g");
-			
-		triangles2.attr("id", "POI_triangles")
-			.attr("class","POI_triangles")
-			.selectAll(".POI_triangles")
-			.data(voronoi.triangles(hasPOI))
-			.enter()
-			.append("path")
-			.call(redrawTriangle)
+		// if there are doors, draw links between them 
+		var poilinks = d3.selectAll("#voronoi").append("g")
 
-		d3.select("#voronoi")
-			.attr("class", "links_original")
-			.selectAll(".links_original")
-			.data(voronoi.links(hasPOI))
+		var temp = hasPOI.map(function(x){return [x.x, x.y]});
+		// var triangles2 = d3.selectAll("#delaunay")
+		// 	.append("g");
+			
+		// triangles2.attr("id", "POI_triangles")
+		// 	.attr("class","POI_triangles")
+		// 	.selectAll(".POI_triangles")
+		// 	.data(voronoi.triangles(hasPOI))
+		// 	.enter()
+		// 	.append("path")
+		// 	.call(redrawTriangle)
+
+		poilinks.attr("id","poilinks-" + areaHov[areaHov.length-1])
+			.selectAll(".linksPOI")
+			.data(voronoi.links(temp))
 			.enter().append("line")
 			.call(redrawLink);
 
-			//latticegenXclude(aselected, waypoints);
 		}  else {
 
 			latticegen(aselected, waypoints);
+			// if there are doors, draw links between them 
+			// var latticelinks = d3.selectAll("#voronoi").append("g")
+			
+			// latticelinks.attr("id", "latticelinks-" + areaHov[areaHov.length-1])
+			// 	.attr("class", "linksLattice")
+			// 	.selectAll(".linksLattice")
+			// 	.data(voronoi.links(hasPOI))
+			// 	.enter().append("line")
+			// 	.call(redrawLink);
 		}
 	
 
-	var s = sa.concat(sd);
+	var s = waypoints.filter(function(x){if ((x.area === areaHov[areaHov.length-1]) && (x.type !=="corners")){ return x}});
 	
 	if (areaHov[areaHov.length-1] === "area-1") {
 		// just keep the obstacle out
-		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area ==="temp")){return x}});
+		var so = waypoints.filter(function(x){if ((x.type === "obstacle") && (x.area === "temp")){return x}});
 		var s = s.concat(so);
 	}
 
@@ -479,16 +476,16 @@ var delaunayHelper = function(waypoints, areaHov) {
 
 	var s2 = s.map(function(d) {return [d.x, d.y]});
 	
-	var triangle = d3.selectAll("#delaunay")
-		.attr("class", "triangles")
-		.selectAll(".triangles")
-		.data(voronoi.triangles(s2))
-		.enter()
-		.append("path")
-		.call(redrawTriangle)
+	// var triangle = d3.selectAll("#delaunay")
+	// 	.attr("class", "triangles")
+	// 	.selectAll(".triangles")
+	// 	.data(voronoi.triangles(s2))
+	// 	.enter()
+	// 	.append("path")
+	// 	.call(redrawTriangle)
+	var bulklinks = d3.selectAll("#voronoi").append("g")
 
-	var link = d3.select("#voronoi")
-		.attr("class", "links")
+	bulklinks.attr("id","bulklinks-" + areaHov[areaHov.length-1])
 		.selectAll(".links")
 		.data(voronoi.links(s2))
 		.enter().append("line")
